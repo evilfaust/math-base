@@ -1,0 +1,46 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  # Автоматический ребилд раз в сутки (обновляет данные GitHub API)
+  schedule:
+    - cron: "0 3 * * *"  # 3:00 UTC каждую ночь
+  workflow_dispatch:      # ручной запуск из GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # Опционально: без токена работает, но с ним выше rate limit
+          GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/math-base
+            git pull origin main
+            npm ci --omit=dev
+            npm run build
+            pm2 restart math-base || pm2 start npm --name math-base -- start
+            pm2 save
