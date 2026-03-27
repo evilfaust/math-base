@@ -16,21 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-        env:
-          # Опционально: без токена работает, но с ним выше rate limit
-          GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -40,7 +25,7 @@ jobs:
           script: |
             cd /var/www/math-base
             git pull origin main
-            npm ci --omit=dev
+            npm install
             npm run build
-            pm2 restart math-base || pm2 start npm --name math-base -- start
+            pm2 restart math-base
             pm2 save
