@@ -99,7 +99,7 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
           <img
             src={project.logo}
             alt={`${project.name} logo`}
-            className="h-7 w-auto object-contain object-left mb-1 opacity-90"
+            className={`h-7 w-auto object-contain object-left mb-1 opacity-90 ${project.id === "ege-journal" ? "rounded-md" : ""}`}
           />
         )}
         <h2 className={`font-bold text-white leading-tight ${featured ? "text-2xl" : "text-xl"}`}>
