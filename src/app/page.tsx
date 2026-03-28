@@ -1,13 +1,18 @@
 import { projects } from "@/lib/projects";
 import { fetchAllRepos } from "@/lib/github";
+import { getAllPostsMeta } from "@/lib/blog";
 import { ProjectGrid } from "@/components/ProjectGrid";
+import { BlogCard } from "@/components/BlogCard";
 import Link from "next/link";
 
 export const revalidate = 3600;
 
 export default async function HomePage() {
   const repos = projects.map((p) => p.repo);
-  const ghData = await fetchAllRepos(repos);
+  const [ghData, blogPosts] = await Promise.all([
+    fetchAllRepos(repos),
+    Promise.resolve(getAllPostsMeta()),
+  ]);
 
   const totalPublic = projects.filter((p) => p.status === "public").length;
   const totalSoon = projects.filter((p) => p.status === "soon").length;
@@ -111,8 +116,13 @@ export default async function HomePage() {
           </header>
 
           {/* ── Grid ────────────────────────────────────────────── */}
-          <section id="projects">
+          <section id="projects" className="flex flex-col gap-8">
             <ProjectGrid projects={projects} ghData={ghData} />
+
+            {/* Blog card — outside filter, always visible */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <BlogCard posts={blogPosts} index={projects.length} />
+            </div>
           </section>
 
           {/* ── Footer ──────────────────────────────────────────── */}
