@@ -99,8 +99,7 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
           <img
             src={project.logo}
             alt={`${project.name} logo`}
-            className="h-7 w-auto object-contain object-left mb-1"
-            style={{ filter: "brightness(0) invert(1)", opacity: 0.9 }}
+            className="h-7 w-auto object-contain object-left mb-1 opacity-90"
           />
         )}
         <h2 className={`font-bold text-white leading-tight ${featured ? "text-2xl" : "text-xl"}`}>
