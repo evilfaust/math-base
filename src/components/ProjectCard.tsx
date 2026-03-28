@@ -93,8 +93,16 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
         )}
       </div>
 
-      {/* ── Name + date ─────────────────────────────────────── */}
+      {/* ── Logo + Name + date ──────────────────────────────── */}
       <div className="flex flex-col gap-1">
+        {project.logo && (
+          <img
+            src={project.logo}
+            alt={`${project.name} logo`}
+            className="h-7 w-auto object-contain object-left mb-1"
+            style={{ filter: "brightness(0) invert(1)", opacity: 0.9 }}
+          />
+        )}
         <h2 className={`font-bold text-white leading-tight ${featured ? "text-2xl" : "text-xl"}`}>
           {project.name}
         </h2>
@@ -156,9 +164,21 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
             Code
           </a>
 
+          {project.demoUrl && (
+            <a
+              href={project.demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Demo ${project.name}`}
+              className="cursor-pointer flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[40px] rounded-lg transition-all duration-200 text-zinc-400 hover:text-zinc-200 border border-zinc-700/60 hover:border-zinc-500"
+            >
+              Demo
+              <ArrowIcon />
+            </a>
+          )}
           {hasLive ? (
             <a
-              href={liveUrl}
+              href={liveUrl!}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Открыть ${project.name}`}
@@ -180,10 +200,6 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
               Открыть
               <ArrowIcon />
             </a>
-          ) : project.status === "soon" ? (
-            <span className="text-xs text-amber-500/60 px-3 py-2">
-              скоро...
-            </span>
           ) : null}
         </div>
       </div>

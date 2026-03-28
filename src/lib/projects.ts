@@ -6,6 +6,8 @@ export interface Project {
   description: string;
   repo: string;           // "owner/repo"
   website?: string;       // live URL if exists
+  demoUrl?: string;       // demo URL if available
+  logo?: string;          // logo image URL
   landingRepo?: string;   // отдельный лендинг-репо
   status: ProjectStatus;
   tags: string[];
@@ -18,9 +20,10 @@ export const projects: Project[] = [
   {
     id: "lemma",
     name: "Lemma",
-    description: "Образовательный инструмент для работы с математическими понятиями и доказательствами",
+    description: "Инструменты учителя математики: база задач, генератор работ, геометрия с GeoGebra, онлайн-тесты, ТДФ-конспекты",
     repo: "evilfaust/lemma",
     website: "https://lemma.oipav.ru",
+    logo: "https://lemma.oipav.ru/lemma-logo.png",
     status: "public",
     tags: ["edu", "math"],
     accent: "#6366f1",
@@ -30,11 +33,12 @@ export const projects: Project[] = [
   {
     id: "ege-journal",
     name: "ЕГЭ Журнал",
-    description: "Дневник подготовки к ЕГЭ — отслеживай прогресс, анализируй слабые места",
+    description: "Веб-платформа для учителей математики: база задач, генератор контрольных работ и вариантов ЕГЭ, онлайн-тесты для учеников с достижениями.",
     repo: "evilfaust/ege-journal",
     website: "https://ege-journal.oipav.ru",
+    logo: "https://ege-journal.oipav.ru/ege-journal-logo.png",
     status: "public",
-    tags: ["edu", "productivity"],
+    tags: ["edu", "math"],
     accent: "#8b5cf6",
     hasLanding: true,
   },
@@ -54,8 +58,10 @@ export const projects: Project[] = [
     name: "PulseBack",
     description: "Инструмент для пульс-опросов — быстрый сбор обратной связи внутри команды",
     repo: "evilfaust/pulse-survey-app",
+    website: "https://pulseback.ru",
+    demoUrl: "https://demo.pulseback.ru",
     landingRepo: "evilfaust/pulseback-landing",
-    status: "soon",
+    status: "public",
     tags: ["hr", "feedback", "saas"],
     accent: "#ec4899",
     featured: true,
@@ -64,10 +70,10 @@ export const projects: Project[] = [
   {
     id: "progression",
     name: "Progression",
-    description: "Инструмент для отслеживания личного и профессионального роста",
+    description: "Интерактивные модели для уроков математики: прогрессии (ОГЭ/ЕГЭ), Фибоначчи, Паскаль, решето Эратосфена. 19 HTML-файлов без зависимостей.",
     repo: "evilfaust/progression",
     status: "public",
-    tags: ["productivity", "personal"],
+    tags: ["edu", "math"],
     accent: "#22c55e",
     hasLanding: false,
   },
