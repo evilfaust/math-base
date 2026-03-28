@@ -3,10 +3,9 @@ name: Deploy to VPS
 on:
   push:
     branches: [main]
-  # Автоматический ребилд раз в сутки (обновляет данные GitHub API)
   schedule:
-    - cron: "0 3 * * *"  # 3:00 UTC каждую ночь
-  workflow_dispatch:      # ручной запуск из GitHub UI
+    - cron: "0 3 * * *"
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -16,16 +15,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /var/www/math-base
-            git pull origin main
-            npm install
-            npm run build
-            pm2 restart math-base
-            pm2 save
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /var/www/math-base && git pull origin main && npm install && npm run build && pm2 restart math-base && pm2 save"
