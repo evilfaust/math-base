@@ -32,7 +32,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" className={`${archivo.variable} ${spaceGrotesk.variable}`}>
+    <html lang="ru" suppressHydrationWarning className={`${archivo.variable} ${spaceGrotesk.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              try {
+                var s = localStorage.getItem('theme');
+                var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute(
+                  'data-theme',
+                  s === 'dark' ? 'dark' : s === 'light' ? 'light' : d ? 'dark' : 'light'
+                );
+              } catch(e) {}
+            })();`,
+          }}
+        />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

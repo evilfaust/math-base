@@ -102,11 +102,14 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
             className={`h-7 w-auto object-contain object-left mb-1 opacity-90 ${project.id === "ege-journal" ? "rounded-md" : ""}`}
           />
         )}
-        <h2 className={`font-bold text-white leading-tight ${featured ? "text-2xl" : "text-xl"}`}>
+        <h2
+          className={`font-bold leading-tight ${featured ? "text-2xl" : "text-xl"}`}
+          style={{ color: "var(--text-primary)" }}
+        >
           {project.name}
         </h2>
         {lastPush && (
-          <span className="text-xs text-zinc-600">
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
             обновлён {lastPush}
           </span>
         )}
@@ -114,7 +117,7 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
 
       {/* ── Description ─────────────────────────────────────── */}
       {desc && (
-        <p className="text-sm text-zinc-400 leading-[1.65] flex-1">
+        <p className="text-sm leading-[1.65] flex-1" style={{ color: "var(--text-secondary)" }}>
           {desc}
         </p>
       )}
@@ -132,12 +135,12 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
       <div className="flex items-center justify-between gap-2 pt-1 mt-auto">
 
         {/* Meta */}
-        <div className="flex items-center gap-3 text-xs text-zinc-600">
+        <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
           {language && (
             <span className="flex items-center gap-1.5">
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: languageColors[language] ?? "#52525b" }}
+                style={{ backgroundColor: languageColors[language] ?? "var(--text-muted)" }}
               />
               {language}
             </span>
@@ -157,7 +160,7 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${project.name} на GitHub`}
-            className="cursor-pointer flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors duration-200 px-2.5 py-2 min-h-[40px] rounded-lg hover:bg-white/5"
+            className="btn-ghost cursor-pointer flex items-center gap-1.5 text-xs px-2.5 py-2 min-h-[40px] rounded-lg"
           >
             <GitHubIcon />
             Code
@@ -169,7 +172,7 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Demo ${project.name}`}
-              className="cursor-pointer flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[40px] rounded-lg transition-all duration-200 text-zinc-400 hover:text-zinc-200 border border-zinc-700/60 hover:border-zinc-500"
+              className="btn-outline cursor-pointer flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[40px] rounded-lg"
             >
               Demo
               <ArrowIcon />

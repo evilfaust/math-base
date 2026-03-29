@@ -13,7 +13,7 @@ interface ProjectGridProps {
   ghData: Record<string, GitHubRepoData | null>;
 }
 
-const filters: { value: Filter; label: string; count?: number }[] = [
+const filters: { value: Filter; label: string }[] = [
   { value: "all",    label: "Все"   },
   { value: "public", label: "Live"  },
   { value: "soon",   label: "Скоро" },
@@ -27,7 +27,6 @@ export function ProjectGrid({ projects, ghData }: ProjectGridProps) {
     filter === "all" ? true : p.status === filter
   );
 
-  // Featured first, then by name
   const sorted = [...filtered].sort(
     (a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)
   );
@@ -37,7 +36,11 @@ export function ProjectGrid({ projects, ghData }: ProjectGridProps) {
 
       {/* ── Filter tabs ──────────────────────────────────────── */}
       <nav
-        className="flex items-center gap-1 p-1 w-fit rounded-xl bg-white/[0.03] border border-white/[0.06]"
+        className="flex items-center gap-1 p-1 w-fit rounded-xl"
+        style={{
+          background: "var(--card-bg)",
+          border: "1px solid var(--card-border)",
+        }}
         role="group"
         aria-label="Фильтр проектов"
       >
@@ -46,22 +49,24 @@ export function ProjectGrid({ projects, ghData }: ProjectGridProps) {
             f.value === "all"
               ? projects.length
               : projects.filter((p) => p.status === f.value).length;
+          const active = filter === f.value;
 
           return (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              aria-pressed={filter === f.value}
+              aria-pressed={active}
               className="relative cursor-pointer px-4 py-2 text-sm rounded-lg transition-colors duration-200 min-h-[40px] flex items-center gap-2"
-              style={{
-                color: filter === f.value ? "#fafafa" : "#52525b",
-              }}
+              style={{ color: active ? "var(--text-primary)" : "var(--text-muted)" }}
             >
-              {filter === f.value && (
+              {active && (
                 <motion.span
                   layoutId="filter-pill"
                   className="absolute inset-0 rounded-lg"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  style={{
+                    background: "var(--filter-pill-bg)",
+                    border: "1px solid var(--filter-pill-border)",
+                  }}
                   transition={
                     prefersReducedMotion
                       ? { duration: 0 }
@@ -72,7 +77,7 @@ export function ProjectGrid({ projects, ghData }: ProjectGridProps) {
               <span className="relative z-10">{f.label}</span>
               <span
                 className="relative z-10 text-xs tabular-nums"
-                style={{ color: filter === f.value ? "#71717a" : "#3f3f46" }}
+                style={{ color: "var(--text-muted)" }}
               >
                 {count}
               </span>
@@ -90,7 +95,6 @@ export function ProjectGrid({ projects, ghData }: ProjectGridProps) {
               layout
               exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.96 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.22 }}
-              // Featured projects span both columns on large screens
               className={project.featured ? "md:col-span-2 lg:col-span-1" : ""}
             >
               <ProjectCard

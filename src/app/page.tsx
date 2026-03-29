@@ -3,9 +3,17 @@ import { fetchAllRepos } from "@/lib/github";
 import { getAllPostsMeta } from "@/lib/blog";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { BlogCard } from "@/components/BlogCard";
-import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const revalidate = 3600;
+
+function ExternalArrow() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17L17 7M17 7H7M17 7v10" />
+    </svg>
+  );
+}
 
 export default async function HomePage() {
   const repos = projects.map((p) => p.repo);
@@ -26,36 +34,40 @@ export default async function HomePage() {
 
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <nav className="relative z-20 max-w-5xl mx-auto px-5 sm:px-8 pt-8 flex items-center justify-between">
-        <span className="text-zinc-500 text-sm font-medium tracking-tight">
+        <span
+          className="text-sm font-semibold tracking-tight"
+          style={{ color: "var(--text-primary)" }}
+        >
           oipav<span className="text-indigo-500">.</span>ru
         </span>
-        <div className="flex items-center gap-1">
-          <a
-            href="#projects"
-            className="text-sm text-zinc-500 hover:text-zinc-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
-          >
+
+        <div
+          className="flex items-center gap-0.5 px-2 py-1.5 rounded-full backdrop-blur-sm"
+          style={{
+            background: "var(--nav-bg)",
+            border: "1px solid var(--card-border)",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
+          <a href="#projects" className="nav-link text-sm px-3 py-1.5">
             Проекты
           </a>
           <a
             href="https://blog.oipav.ru"
-            className="text-sm text-zinc-500 hover:text-zinc-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-1"
+            className="nav-link text-sm px-3 py-1.5 flex items-center gap-1"
           >
-            Блог
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M7 17L17 7M17 7H7M17 7v10" />
-            </svg>
+            Блог <ExternalArrow />
           </a>
           <a
             href="https://github.com/evilfaust"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-zinc-500 hover:text-zinc-200 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-1"
+            className="nav-link text-sm px-3 py-1.5 flex items-center gap-1"
           >
-            GitHub
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M7 17L17 7M17 7H7M17 7v10" />
-            </svg>
+            GitHub <ExternalArrow />
           </a>
+          <div className="w-px h-4 mx-1" style={{ background: "var(--divider)" }} />
+          <ThemeToggle />
         </div>
       </nav>
 
@@ -70,7 +82,10 @@ export default async function HomePage() {
                 <span className="gradient-text">Projects</span>
               </h1>
 
-              <p className="text-zinc-400 text-lg sm:text-xl max-w-lg leading-relaxed font-light">
+              <p
+                className="text-lg sm:text-xl max-w-lg leading-relaxed font-light"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 Учитель математики. Делаю инструменты для преподавания —
                 генераторы задач, тесты, интерактивные модели.
                 Всё открытое, всё здесь.
@@ -79,33 +94,45 @@ export default async function HomePage() {
               {/* Stats */}
               <div className="flex items-center gap-8 pt-2">
                 <div>
-                  <div className="text-4xl sm:text-5xl font-bold text-white tabular-nums leading-none">
+                  <div
+                    className="text-4xl sm:text-5xl font-bold tabular-nums leading-none"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     {projects.length}
                   </div>
-                  <div className="text-[0.65rem] text-zinc-600 mt-2 uppercase tracking-[0.15em]">
+                  <div
+                    className="text-[0.65rem] mt-2 uppercase tracking-[0.15em]"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     проектов
                   </div>
                 </div>
 
-                <div className="w-px h-12 bg-zinc-800" />
+                <div className="w-px h-12" style={{ background: "var(--divider)" }} />
 
                 <div>
-                  <div className="text-4xl sm:text-5xl font-bold text-emerald-400 tabular-nums leading-none">
+                  <div className="text-4xl sm:text-5xl font-bold text-emerald-500 tabular-nums leading-none">
                     {totalPublic}
                   </div>
-                  <div className="text-[0.65rem] text-zinc-600 mt-2 uppercase tracking-[0.15em]">
+                  <div
+                    className="text-[0.65rem] mt-2 uppercase tracking-[0.15em]"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     в сети
                   </div>
                 </div>
 
                 {totalSoon > 0 && (
                   <>
-                    <div className="w-px h-12 bg-zinc-800" />
+                    <div className="w-px h-12" style={{ background: "var(--divider)" }} />
                     <div>
-                      <div className="text-4xl sm:text-5xl font-bold text-amber-400 tabular-nums leading-none">
+                      <div className="text-4xl sm:text-5xl font-bold text-amber-500 tabular-nums leading-none">
                         {totalSoon}
                       </div>
-                      <div className="text-[0.65rem] text-zinc-600 mt-2 uppercase tracking-[0.15em]">
+                      <div
+                        className="text-[0.65rem] mt-2 uppercase tracking-[0.15em]"
+                        style={{ color: "var(--text-muted)" }}
+                      >
                         скоро
                       </div>
                     </div>
@@ -126,22 +153,22 @@ export default async function HomePage() {
           </section>
 
           {/* ── Footer ──────────────────────────────────────────── */}
-          <footer className="mt-28 pt-8 border-t border-zinc-900 flex items-center justify-between">
-            <span className="text-xs text-zinc-700 font-medium">
+          <footer
+            className="mt-28 pt-8 flex items-center justify-between"
+            style={{ borderTop: "1px solid var(--divider)" }}
+          >
+            <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
               evilfaust · {new Date().getFullYear()}
             </span>
             <div className="flex items-center gap-4">
-              <a
-                href="https://blog.oipav.ru"
-                className="text-xs text-zinc-700 hover:text-zinc-400 transition-colors duration-200"
-              >
+              <a href="https://blog.oipav.ru" className="footer-link text-xs">
                 blog.oipav.ru
               </a>
               <a
                 href="https://github.com/evilfaust"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-zinc-700 hover:text-zinc-400 transition-colors duration-200"
+                className="footer-link text-xs"
               >
                 github.com/evilfaust
               </a>
