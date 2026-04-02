@@ -114,14 +114,6 @@ export default async function HomePage() {
                   </div>
                 )}
               </div>
-
-              <div className="hero-mini-note">
-                <span className="hero-mini-note-line" />
-                <p>
-                  Форма намеренно спокойная. Характер появляется в ритме,
-                  типографике и чертёжной подаче, а не в перегруженных эффектах.
-                </p>
-              </div>
             </aside>
           </section>
 

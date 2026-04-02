@@ -85,11 +85,13 @@ export function ProjectCard({ project, ghData, index, featured }: ProjectCardPro
 
             <div className="flex flex-col gap-3">
               {project.logo && (
-                <img
-                  src={project.logo}
-                  alt={`${project.name} logo`}
-                  className={`h-8 w-auto object-contain object-left ${project.id === "ege-journal" ? "rounded-md" : ""}`}
-                />
+                <div className="project-logo-wrap">
+                  <img
+                    src={project.logo}
+                    alt={`${project.name} logo`}
+                    className={`project-logo ${project.id === "ege-journal" ? "rounded-md" : ""}`}
+                  />
+                </div>
               )}
 
               <div>
