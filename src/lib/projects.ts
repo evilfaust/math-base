@@ -23,7 +23,7 @@ export const projects: Project[] = [
     description: "Инструменты учителя математики: база задач, генератор работ, геометрия с GeoGebra, онлайн-тесты, ТДФ-конспекты",
     repo: "evilfaust/lemma",
     website: "https://lemma.oipav.ru",
-    logo: "https://lemma.oipav.ru/lemma-logo.png",
+    logo: "https://lemma.oipav.ru/lemma-logo-new.png",
     status: "public",
     tags: ["edu", "math"],
     accent: "#6366f1",
