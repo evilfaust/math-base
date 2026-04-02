@@ -1,8 +1,6 @@
 import { projects } from "@/lib/projects";
 import { fetchAllRepos } from "@/lib/github";
-import { getAllPostsMeta } from "@/lib/blog";
 import { ProjectGrid } from "@/components/ProjectGrid";
-import { BlogCard } from "@/components/BlogCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const revalidate = 3600;
@@ -17,10 +15,7 @@ function ExternalArrow() {
 
 export default async function HomePage() {
   const repos = projects.map((p) => p.repo);
-  const [ghData, blogPosts] = await Promise.all([
-    fetchAllRepos(repos),
-    Promise.resolve(getAllPostsMeta()),
-  ]);
+  const ghData = await fetchAllRepos(repos);
 
   const totalPublic = projects.filter((p) => p.status === "public").length;
   const totalSoon = projects.filter((p) => p.status === "soon").length;
@@ -130,23 +125,6 @@ export default async function HomePage() {
             </div>
 
             <ProjectGrid projects={projects} ghData={ghData} />
-
-            <div className="mt-6 grid grid-cols-1">
-              <BlogCard posts={blogPosts} index={projects.length} />
-            </div>
-          </section>
-
-          <section className="manifesto-strip">
-            <div>
-              <span className="section-kicker">Approach</span>
-              <h2 className="section-title">Меньше шума, больше характера.</h2>
-            </div>
-            <p className="manifesto-text">
-              Хотелось сохранить простоту хаба, но убрать ощущение очередного
-              универсального техно-лендинга. Поэтому акцент смещён на композицию,
-              спокойный светлый фон, архитектурные линии и карточки, которые
-              выглядят скорее как листы из каталога, чем как шаблон SaaS.
-            </p>
           </section>
 
           <footer className="site-footer">

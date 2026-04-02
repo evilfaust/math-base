@@ -290,7 +290,6 @@ body::after {
 
 .hero-stats,
 .section-frame,
-.manifesto-strip,
 .project-card,
 .blog-card {
   background: var(--panel-bg);
@@ -671,19 +670,6 @@ body::after {
   color: var(--text-primary);
 }
 
-.manifesto-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 2rem;
-  margin-top: 2rem;
-  padding: 1.6rem;
-}
-
-.manifesto-text {
-  color: var(--text-secondary);
-  line-height: 1.8;
-}
-
 .site-footer {
   display: flex;
   align-items: center;
@@ -713,7 +699,6 @@ body::after {
 
 @media (max-width: 980px) {
   .hero-shell,
-  .manifesto-strip,
   .section-heading {
     grid-template-columns: 1fr;
     display: grid;
@@ -776,8 +761,7 @@ body::after {
     border-bottom: 0;
   }
 
-  .section-frame,
-  .manifesto-strip {
+  .section-frame {
     padding: 1rem;
   }
 
