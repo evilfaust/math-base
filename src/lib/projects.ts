@@ -77,4 +77,16 @@ export const projects: Project[] = [
     accent: "#22c55e",
     hasLanding: false,
   },
+  {
+    id: "geometry",
+    name: "Geometry",
+    description: "Небольшой статический сайт с интерактивными пошаговыми построениями геометрических фигур для учеников.",
+    repo: "evilfaust/geometry",
+    website: "https://geometry.oipav.ru",
+    logo: "https://raw.githubusercontent.com/evilfaust/geometry/main/logo.png",
+    status: "public",
+    tags: ["edu", "math", "geometry"],
+    accent: "#14b8a6",
+    hasLanding: false,
+  },
 ];
