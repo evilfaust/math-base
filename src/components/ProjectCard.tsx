@@ -12,7 +12,6 @@ interface ProjectCardProps {
   featured?: boolean;
 }
 
-/* ─── Icons ─────────────────────────────────────────────────── */
 function StarIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -37,15 +36,14 @@ function GitHubIcon() {
   );
 }
 
-/* ─── Helpers ───────────────────────────────────────────────── */
 const languageColors: Record<string, string> = {
   TypeScript: "#3178c6",
   JavaScript: "#f1e05a",
-  Python:     "#3572A5",
-  Rust:       "#dea584",
-  Go:         "#00ADD8",
-  CSS:        "#563d7c",
-  HTML:       "#e34c26",
+  Python: "#3572A5",
+  Rust: "#dea584",
+  Go: "#00ADD8",
+  CSS: "#563d7c",
+  HTML: "#e34c26",
 };
 
 function formatDate(iso: string): string {
@@ -53,156 +51,130 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("ru-RU", { month: "short", year: "numeric" });
 }
 
-/* ─── Component ─────────────────────────────────────────────── */
 export function ProjectCard({ project, ghData, index, featured }: ProjectCardProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  const liveUrl   = project.website ?? ghData?.homepage ?? null;
-  const repoUrl   = `https://github.com/${project.repo}`;
-  const desc      = project.description || ghData?.description || "";
-  const language  = ghData?.language ?? null;
-  const stars     = ghData?.stars ?? 0;
-  const lastPush  = ghData?.pushedAt ? formatDate(ghData.pushedAt) : null;
-  const hasLive   = liveUrl && project.status !== "soon";
+  const liveUrl = project.website ?? ghData?.homepage ?? null;
+  const repoUrl = `https://github.com/${project.repo}`;
+  const desc = project.description || ghData?.description || "";
+  const language = ghData?.language ?? null;
+  const stars = ghData?.stars ?? 0;
+  const lastPush = ghData?.pushedAt ? formatDate(ghData.pushedAt) : null;
+  const hasLive = liveUrl && project.status !== "soon";
+  const order = String(index + 1).padStart(2, "0");
 
   return (
     <motion.article
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
         prefersReducedMotion
           ? { duration: 0 }
-          : { duration: 0.55, delay: index * 0.07, ease: [0.22, 0.68, 0, 1] }
+          : { duration: 0.55, delay: index * 0.06, ease: [0.22, 0.68, 0, 1] }
       }
-      className="card flex flex-col gap-5 p-6 h-full"
-      style={{ "--accent": project.accent } as React.CSSProperties}
+      className="project-card"
+      style={{ "--accent-color": project.accent } as React.CSSProperties}
     >
-      {/* ── Top row ─────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3 pt-1">
-        <StatusBadge status={project.status} />
-        {featured && (
-          <span className="text-[0.6rem] font-semibold tracking-[0.12em] uppercase px-2 py-0.5 rounded-full border"
-            style={{
-              color: project.accent,
-              borderColor: `color-mix(in srgb, ${project.accent} 30%, transparent)`,
-              background: `color-mix(in srgb, ${project.accent} 8%, transparent)`,
-            }}
-          >
-            Featured
-          </span>
-        )}
-      </div>
-
-      {/* ── Logo + Name + date ──────────────────────────────── */}
-      <div className="flex flex-col gap-1">
-        {project.logo && (
-          <img
-            src={project.logo}
-            alt={`${project.name} logo`}
-            className={`h-7 w-auto object-contain object-left mb-1 opacity-90 ${project.id === "ege-journal" ? "rounded-md" : ""}`}
-          />
-        )}
-        <h2
-          className={`font-bold leading-tight ${featured ? "text-2xl" : "text-xl"}`}
-          style={{ color: "var(--text-primary)" }}
-        >
-          {project.name}
-        </h2>
-        {lastPush && (
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-            обновлён {lastPush}
-          </span>
-        )}
-      </div>
-
-      {/* ── Description ─────────────────────────────────────── */}
-      {desc && (
-        <p className="text-sm leading-[1.65] flex-1" style={{ color: "var(--text-secondary)" }}>
-          {desc}
-        </p>
-      )}
-
-      {/* ── Tags ────────────────────────────────────────────── */}
-      {project.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {project.tags.map((tag) => (
-            <span key={tag} className="tag">{tag}</span>
-          ))}
-        </div>
-      )}
-
-      {/* ── Footer ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-2 pt-1 mt-auto">
-
-        {/* Meta */}
-        <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
-          {language && (
-            <span className="flex items-center gap-1.5">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: languageColors[language] ?? "var(--text-muted)" }}
-              />
-              {language}
+      <div className="project-card-inner">
+        <div className="project-card-head">
+          <div className="flex flex-col gap-4">
+            <span className="project-index">
+              Project {order}
+              {featured ? " / featured" : ""}
             </span>
-          )}
-          {stars > 0 && (
-            <span className="flex items-center gap-1">
-              <StarIcon />
-              {stars}
-            </span>
-          )}
+
+            <div className="flex flex-col gap-3">
+              {project.logo && (
+                <img
+                  src={project.logo}
+                  alt={`${project.name} logo`}
+                  className={`h-8 w-auto object-contain object-left ${project.id === "ege-journal" ? "rounded-md" : ""}`}
+                />
+              )}
+
+              <div>
+                <h3 className="project-title">{project.name}</h3>
+                <div className="project-subline">
+                  <span>{project.repo.split("/")[1]}</span>
+                  {lastPush && <span>обновлён {lastPush}</span>}
+                  {project.hasLanding && <span>есть отдельный лендинг</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <StatusBadge status={project.status} />
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1">
-          <a
-            href={repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${project.name} на GitHub`}
-            className="btn-ghost cursor-pointer flex items-center gap-1.5 text-xs px-2.5 py-2 min-h-[40px] rounded-lg"
-          >
-            <GitHubIcon />
-            Code
-          </a>
+        {desc && <p className="project-description">{desc}</p>}
 
-          {project.demoUrl && (
+        {project.tags.length > 0 && (
+          <div className="project-tags">
+            {project.tags.map((tag) => (
+              <span key={tag} className="tag">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="project-card-footer">
+          <div className="project-meta">
+            {language && (
+              <span className="project-meta-item">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: languageColors[language] ?? "var(--text-muted)" }}
+                />
+                {language}
+              </span>
+            )}
+            {stars > 0 && (
+              <span className="project-meta-item">
+                <StarIcon />
+                {stars}
+              </span>
+            )}
+          </div>
+
+          <div className="project-actions">
             <a
-              href={project.demoUrl}
+              href={repoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Demo ${project.name}`}
-              className="btn-outline cursor-pointer flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[40px] rounded-lg"
+              aria-label={`${project.name} на GitHub`}
+              className="action-link"
             >
-              Demo
-              <ArrowIcon />
+              <GitHubIcon />
+              Code
             </a>
-          )}
-          {hasLive ? (
-            <a
-              href={liveUrl!}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Открыть ${project.name}`}
-              className="cursor-pointer flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[40px] rounded-lg transition-all duration-200"
-              style={{
-                color: project.accent,
-                background: `color-mix(in srgb, ${project.accent} 10%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${project.accent} 20%, transparent)`,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  `color-mix(in srgb, ${project.accent} 18%, transparent)`;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  `color-mix(in srgb, ${project.accent} 10%, transparent)`;
-              }}
-            >
-              Открыть
-              <ArrowIcon />
-            </a>
-          ) : null}
+
+            {project.demoUrl && (
+              <a
+                href={project.demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Demo ${project.name}`}
+                className="action-link"
+              >
+                Demo
+                <ArrowIcon />
+              </a>
+            )}
+
+            {hasLive ? (
+              <a
+                href={liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Открыть ${project.name}`}
+                className="action-link action-link-primary"
+              >
+                Открыть
+                <ArrowIcon />
+              </a>
+            ) : null}
+          </div>
         </div>
       </div>
     </motion.article>

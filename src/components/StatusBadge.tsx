@@ -1,29 +1,38 @@
 import type { ProjectStatus } from "@/lib/projects";
 
-const config: Record<ProjectStatus, { label: string; dot: string; className: string }> = {
+const config: Record<ProjectStatus, { label: string; tone: string }> = {
   public: {
     label: "Live",
-    dot: "bg-emerald-400",
-    className: "bg-emerald-500/8 text-emerald-400 border border-emerald-500/15",
+    tone: "var(--success)",
   },
   soon: {
     label: "Soon",
-    dot: "bg-amber-400",
-    className: "bg-amber-500/8 text-amber-400 border border-amber-500/15",
+    tone: "var(--warning)",
   },
   private: {
     label: "Private",
-    dot: "bg-zinc-500",
-    className: "bg-zinc-800/50 text-zinc-500 border border-zinc-700/50",
+    tone: "var(--text-muted)",
   },
 };
 
 export function StatusBadge({ status }: { status: ProjectStatus }) {
-  const { label, dot, className } = config[status];
+  const { label, tone } = config[status];
+
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${className}`}>
+    <span
+      className="inline-flex items-center gap-2 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.16em]"
+      style={{
+        color: tone,
+        border: `1px solid color-mix(in srgb, ${tone} 24%, transparent)`,
+        background: `color-mix(in srgb, ${tone} 9%, transparent)`,
+      }}
+    >
       <span
-        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot} ${status === "public" ? "animate-pulse" : ""}`}
+        className="h-1.5 w-1.5 rounded-full"
+        style={{
+          background: tone,
+          boxShadow: status === "public" ? `0 0 12px ${tone}` : "none",
+        }}
       />
       {label}
     </span>

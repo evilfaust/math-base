@@ -38,25 +38,30 @@ export function ThemeToggle() {
     const next = !dark;
     setDark(next);
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
-    try { localStorage.setItem("theme", next ? "dark" : "light"); } catch {}
+    try {
+      localStorage.setItem("theme", next ? "dark" : "light");
+    } catch {}
   }
 
   return (
     <button
       onClick={toggle}
       aria-label={dark ? "Включить светлую тему" : "Включить тёмную тему"}
-      className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full transition-colors duration-200"
-      style={{ color: "var(--text-muted)" }}
+      className="inline-flex h-10 w-10 items-center justify-center border transition-colors duration-200"
+      style={{
+        color: "var(--text-secondary)",
+        borderColor: "var(--panel-border)",
+        background: "var(--panel-strong)",
+      }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "var(--filter-pill-bg)";
-        (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+        e.currentTarget.style.color = "var(--text-primary)";
+        e.currentTarget.style.borderColor = "var(--panel-border-strong)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "transparent";
-        (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+        e.currentTarget.style.color = "var(--text-secondary)";
+        e.currentTarget.style.borderColor = "var(--panel-border)";
       }}
     >
-      {/* Render moon during SSR/before hydration, then switch */}
       {dark === true ? <SunIcon /> : <MoonIcon />}
     </button>
   );
