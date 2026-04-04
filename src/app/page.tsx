@@ -63,13 +63,7 @@ export default async function HomePage() {
             <div className="hero-copy">
               <span className="section-kicker">Personal project atlas</span>
 
-              <h1 className="hero-title">
-                Простой хаб
-                <br />
-                для живых
-                <br />
-                проектов.
-              </h1>
+              <h1 className="hero-title">Хаб проектов</h1>
 
               <p className="hero-lead">
                 Я преподаю математику и собираю вокруг этого собственные цифровые

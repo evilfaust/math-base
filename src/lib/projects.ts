@@ -89,4 +89,14 @@ export const projects: Project[] = [
     accent: "#14b8a6",
     hasLanding: false,
   },
+  {
+    id: "english-tts",
+    name: "English TTS",
+    description: "Локальный генератор речи для кафедры английского языка: подготовка аудиоматериалов и озвучивание текста через несколько TTS-движков.",
+    repo: "evilfaust/english-tts",
+    status: "public",
+    tags: ["edu", "english", "tts"],
+    accent: "#f97316",
+    hasLanding: false,
+  },
 ];
