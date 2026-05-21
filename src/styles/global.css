@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+  --font-serif: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-terminal-bg: #0e1014;
+  --color-terminal-panel: #14171d;
+  --color-terminal-fg: #e6e1d6;
+  --color-terminal-muted: #8a8578;
+  --color-terminal-dim: #4a4639;
+  --color-terminal-accent: #f5a524;
+  --color-terminal-accent-soft: #c08a1f;
+  --color-terminal-green: #7bb273;
+  --color-terminal-red: #d96c5a;
+  --color-terminal-blue: #6ba4c4;
+
+  --color-paper-bg: #faf7f0;
+  --color-paper-fg: #1a1815;
+  --color-paper-muted: #6b665d;
+  --color-paper-rule: #d9d3c4;
+  --color-paper-accent: #8b2c1c;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-terminal-accent);
+  color: var(--color-terminal-bg);
+}
+
+/* ---------- Terminal scope ---------- */
+
+.terminal {
+  background: var(--color-terminal-bg);
+  color: var(--color-terminal-fg);
+  font-family: var(--font-mono);
+  font-feature-settings: "ss01", "ss02", "cv01";
+  min-height: 100vh;
+}
+
+.terminal a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.terminal .accent {
+  color: var(--color-terminal-accent);
+}
+.terminal .muted {
+  color: var(--color-terminal-muted);
+}
+.terminal .dim {
+  color: var(--color-terminal-dim);
+}
+
+.terminal .prompt::before {
+  content: "$ ";
+  color: var(--color-terminal-accent);
+}
+
+.terminal .chip {
+  display: inline-block;
+  padding: 0 0.4em;
+  border: 1px solid var(--color-terminal-dim);
+  color: var(--color-terminal-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.terminal .row {
+  display: grid;
+  grid-template-columns: 7ch 1fr;
+  gap: 1ch;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px dashed var(--color-terminal-dim);
+  transition: background 120ms ease;
+}
+.terminal .row:hover {
+  background: rgba(245, 165, 36, 0.04);
+}
+
+.terminal .row .status[data-s="public"] {
+  color: var(--color-terminal-green);
+}
+.terminal .row .status[data-s="soon"] {
+  color: var(--color-terminal-accent);
+}
+.terminal .row .status[data-s="private"] {
+  color: var(--color-terminal-red);
+}
+
+.terminal .underline-link {
+  border-bottom: 1px solid var(--color-terminal-dim);
+}
+.terminal .underline-link:hover {
+  border-bottom-color: var(--color-terminal-accent);
+  color: var(--color-terminal-accent);
+}
+
+/* ---------- Editorial scope ---------- */
+
+.editorial {
+  background: var(--color-paper-bg);
+  color: var(--color-paper-fg);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+.editorial a {
+  color: var(--color-paper-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.editorial h1,
+.editorial h2,
+.editorial h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.editorial .prose h2 a,
+.editorial .prose h3 a,
+.editorial .prose h4 a {
+  color: inherit;
+  text-decoration: none;
+}
+.editorial .prose h2 a:hover,
+.editorial .prose h3 a:hover {
+  color: var(--color-paper-accent);
+}
+
+.editorial .prose {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.editorial .prose > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-size: 3.6em;
+  float: left;
+  line-height: 0.85;
+  padding-right: 0.12em;
+  padding-top: 0.05em;
+  font-weight: 600;
+  color: var(--color-paper-accent);
+}
+
+.editorial .prose h2 {
+  font-size: 1.65rem;
+  margin: 2.4rem 0 1rem;
+}
+.editorial .prose h3 {
+  font-size: 1.25rem;
+  margin: 1.8rem 0 0.6rem;
+}
+.editorial .prose p {
+  margin: 0 0 1.1em;
+}
+.editorial .prose ul,
+.editorial .prose ol {
+  margin: 0 0 1.1em 1.4em;
+}
+.editorial .prose li {
+  margin-bottom: 0.35em;
+}
+.editorial .prose ul li {
+  list-style: disc;
+}
+.editorial .prose ol li {
+  list-style: decimal;
+}
+.editorial .prose blockquote {
+  border-left: 2px solid var(--color-paper-accent);
+  padding-left: 1rem;
+  margin: 1.4em 0;
+  color: var(--color-paper-muted);
+  font-style: italic;
+}
+.editorial .prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: rgba(139, 44, 28, 0.07);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+.editorial .prose pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: #1a1815;
+  color: #faf7f0;
+  padding: 1rem 1.2rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 1.4em 0;
+}
+.editorial .prose pre code {
+  background: transparent;
+  padding: 0;
+}
+.editorial .prose hr {
+  border: none;
+  border-top: 1px solid var(--color-paper-rule);
+  margin: 2rem 0;
+}
+
+.editorial .kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-paper-muted);
+}
+
+.editorial .rule {
+  border-top: 1px solid var(--color-paper-rule);
+}
+
+/* KaTeX overrides — keep formulas in the paper palette */
+.editorial .katex-display {
+  margin: 1.6em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

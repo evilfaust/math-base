@@ -1,15 +1,12 @@
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.js
 .yarn/install-state.gz
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
+# astro
+dist
+.astro
 
 # env
 .env
@@ -21,3 +18,4 @@
 *.pem
 npm-debug.log*
 .claude/
+.agents/

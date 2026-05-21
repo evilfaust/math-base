@@ -7,7 +7,7 @@ export interface GitHubRepoData {
   homepage: string | null;
 }
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN ?? process.env.GITHUB_TOKEN;
 
 async function fetchRepo(repo: string): Promise<GitHubRepoData | null> {
   const headers: HeadersInit = {
@@ -19,14 +19,9 @@ async function fetchRepo(repo: string): Promise<GitHubRepoData | null> {
   }
 
   try {
-    const res = await fetch(`https://api.github.com/repos/${repo}`, {
-      headers,
-      next: { revalidate: 3600 }, // ISR: обновляем раз в час
-    });
-
+    const res = await fetch(`https://api.github.com/repos/${repo}`, { headers });
     if (!res.ok) return null;
     const data = await res.json();
-
     return {
       stars: data.stargazers_count ?? 0,
       description: data.description ?? null,
@@ -41,10 +36,10 @@ async function fetchRepo(repo: string): Promise<GitHubRepoData | null> {
 }
 
 export async function fetchAllRepos(
-  repos: string[]
+  repos: string[],
 ): Promise<Record<string, GitHubRepoData | null>> {
   const results = await Promise.all(
-    repos.map(async (repo) => [repo, await fetchRepo(repo)] as const)
+    repos.map(async (repo) => [repo, await fetchRepo(repo)] as const),
   );
   return Object.fromEntries(results);
 }

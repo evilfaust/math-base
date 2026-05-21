@@ -1,0 +1,148 @@
+---
+import TerminalLayout from "~/layouts/TerminalLayout.astro";
+import { projects } from "~/data/projects";
+import { fetchAllRepos } from "~/lib/github";
+import { getCollection } from "astro:content";
+
+const ghData = await fetchAllRepos(projects.map((p) => p.repo));
+
+const statusSymbol = {
+  public: "●",
+  soon: "◐",
+  private: "○",
+} as const;
+
+const totals = {
+  all: projects.length,
+  public: projects.filter((p) => p.status === "public").length,
+  soon: projects.filter((p) => p.status === "soon").length,
+};
+
+const posts = (await getCollection("posts", ({ data }) => !data.draft))
+  .sort((a, b) => +b.data.date - +a.data.date)
+  .slice(0, 3);
+
+const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
+const year = new Date().getFullYear();
+---
+
+<TerminalLayout title="oipav.ru — хаб проектов">
+  <header class="mb-10 flex items-baseline justify-between gap-4 text-sm">
+    <span>
+      <span class="accent">~</span><span class="muted">/oipav.ru</span>
+    </span>
+    <nav class="flex items-center gap-5 text-xs">
+      <a href="/blog" class="underline-link">blog →</a>
+      <a
+        href="https://github.com/evilfaust"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="underline-link">github →</a
+      >
+    </nav>
+  </header>
+
+  <section class="mb-12">
+    <p class="prompt mb-1 text-sm muted">whoami</p>
+    <p class="text-base leading-relaxed">
+      Преподаю математику. Собираю собственные цифровые инструменты вокруг
+      этой работы — от генераторов заданий и тестов до небольших сервисов и
+      заметок.
+    </p>
+  </section>
+
+  <section class="mb-12">
+    <div class="mb-3 flex items-baseline justify-between gap-4">
+      <p class="prompt text-sm muted">ls ~/projects/</p>
+      <span class="text-xs dim">
+        {totals.all} total · {totals.public} public{totals.soon > 0 &&
+          ` · ${totals.soon} soon`}
+      </span>
+    </div>
+
+    <ol class="border-t border-dashed text-sm" style="border-color: var(--color-terminal-dim);">
+      {
+        projects.map((p) => {
+          const gh = ghData[p.repo];
+          const href = p.website ?? `https://github.com/${p.repo}`;
+          return (
+            <li class="row">
+              <span class="status" data-s={p.status} aria-label={p.status}>
+                [{statusSymbol[p.status]}]
+              </span>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <a
+                    href={href}
+                    target={p.website ? "_blank" : undefined}
+                    rel={p.website ? "noopener noreferrer" : undefined}
+                    class="underline-link accent font-medium"
+                  >
+                    {p.name.toLowerCase().replace(/\s+/g, "-")}
+                  </a>
+                  {p.featured && (
+                    <span class="text-xs accent">★ featured</span>
+                  )}
+                </div>
+                <p class="mt-1 text-[13px] leading-snug" style="color: var(--color-terminal-fg);">
+                  {p.description}
+                </p>
+                <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs muted">
+                  {gh && (
+                    <>
+                      <span>★ {gh.stars}</span>
+                      {gh.language && <span>{gh.language}</span>}
+                    </>
+                  )}
+                  <span class="dim">{p.tags.map((t) => `#${t}`).join(" ")}</span>
+                  {p.website && (
+                    <a
+                      href={p.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="underline-link ml-auto"
+                    >
+                      {p.website.replace(/^https?:\/\//, "")} →
+                    </a>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+
+  {
+    posts.length > 0 && (
+      <section class="mb-12">
+        <p class="prompt mb-3 text-sm muted">ls ~/blog/</p>
+        <ul class="text-sm">
+          {posts.map((p) => (
+            <li class="row" style="grid-template-columns: 11ch 1fr;">
+              <span class="dim">{fmtDate(p.data.date)}</span>
+              <div class="min-w-0">
+                <a href={`/blog/${p.id}`} class="underline-link">
+                  {p.data.title}
+                </a>
+                {p.data.tags.length > 0 && (
+                  <span class="ml-3 text-xs dim">
+                    {p.data.tags.map((t) => `#${t}`).join(" ")}
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <footer class="mt-16 flex items-baseline justify-between gap-4 text-xs dim">
+    <span>evilfaust · {year}</span>
+    <span>
+      <span class="muted">built with</span> astro · static
+    </span>
+  </footer>
+</TerminalLayout>
