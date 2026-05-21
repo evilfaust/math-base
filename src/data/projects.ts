@@ -4,14 +4,14 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  repo: string;           // "owner/repo"
-  website?: string;       // live URL if exists
-  demoUrl?: string;       // demo URL if available
-  logo?: string;          // logo image URL
-  landingRepo?: string;   // отдельный лендинг-репо
+  repo: string;
+  website?: string;
+  demoUrl?: string;
+  logo?: string;
+  landingRepo?: string;
   status: ProjectStatus;
   tags: string[];
-  accent: string;         // accent color for card glow & top bar
+  accent: string;
   featured?: boolean;
   hasLanding: boolean;
 }
@@ -20,7 +20,8 @@ export const projects: Project[] = [
   {
     id: "lemma",
     name: "Lemma",
-    description: "Инструменты учителя математики: база задач, генератор работ, геометрия с GeoGebra, онлайн-тесты, ТДФ-конспекты",
+    description:
+      "Инструменты учителя математики: база задач, генератор работ, геометрия с GeoGebra, онлайн-тесты, ТДФ-конспекты",
     repo: "evilfaust/lemma",
     website: "https://lemma.oipav.ru",
     logo: "https://lemma.oipav.ru/lemma-logo-new.png",
@@ -33,7 +34,8 @@ export const projects: Project[] = [
   {
     id: "ege-journal",
     name: "ЕГЭ Журнал",
-    description: "Веб-платформа для учителей математики: база задач, генератор контрольных работ и вариантов ЕГЭ, онлайн-тесты для учеников с достижениями.",
+    description:
+      "Веб-платформа для учителей математики: база задач, генератор контрольных работ и вариантов ЕГЭ, онлайн-тесты для учеников с достижениями.",
     repo: "evilfaust/ege-journal",
     website: "https://ege-journal.oipav.ru",
     logo: "https://ege-journal.oipav.ru/ege-journal-logo.png",
@@ -45,7 +47,8 @@ export const projects: Project[] = [
   {
     id: "dorozhnyj-dnevnik",
     name: "Дорожный дневник",
-    description: "Личный сервис для хранения и публикации путевых заметок и маршрутов",
+    description:
+      "Личный сервис для хранения и публикации путевых заметок и маршрутов",
     repo: "evilfaust/dorozhnyj-dnevnik",
     website: "https://travel-gu.ru",
     status: "public",
@@ -56,7 +59,8 @@ export const projects: Project[] = [
   {
     id: "pulseback",
     name: "PulseBack",
-    description: "Инструмент для пульс-опросов — быстрый сбор обратной связи внутри команды",
+    description:
+      "Инструмент для пульс-опросов — быстрый сбор обратной связи внутри команды",
     repo: "evilfaust/pulse-survey-app",
     website: "https://pulseback.ru",
     demoUrl: "https://demo.pulseback.ru",
@@ -70,7 +74,8 @@ export const projects: Project[] = [
   {
     id: "progression",
     name: "Progression",
-    description: "Интерактивные модели для уроков математики: прогрессии (ОГЭ/ЕГЭ), Фибоначчи, Паскаль, решето Эратосфена. 19 HTML-файлов без зависимостей.",
+    description:
+      "Интерактивные модели для уроков математики: прогрессии (ОГЭ/ЕГЭ), Фибоначчи, Паскаль, решето Эратосфена. 19 HTML-файлов без зависимостей.",
     repo: "evilfaust/progression",
     status: "public",
     tags: ["edu", "math"],
@@ -80,7 +85,8 @@ export const projects: Project[] = [
   {
     id: "geometry",
     name: "Geometry",
-    description: "Небольшой статический сайт с интерактивными пошаговыми построениями геометрических фигур для учеников.",
+    description:
+      "Небольшой статический сайт с интерактивными пошаговыми построениями геометрических фигур для учеников.",
     repo: "evilfaust/geometry",
     website: "https://geometry.oipav.ru",
     logo: "https://raw.githubusercontent.com/evilfaust/geometry/main/logo.png",
@@ -92,7 +98,8 @@ export const projects: Project[] = [
   {
     id: "english-tts",
     name: "English TTS",
-    description: "Локальный генератор речи для кафедры английского языка: подготовка аудиоматериалов и озвучивание текста через несколько TTS-движков.",
+    description:
+      "Локальный генератор речи для кафедры английского языка: подготовка аудиоматериалов и озвучивание текста через несколько TTS-движков.",
     repo: "evilfaust/english-tts",
     status: "public",
     tags: ["edu", "english", "tts"],

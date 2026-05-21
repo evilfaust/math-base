@@ -1,0 +1,46 @@
+---
+import EditorialLayout from "~/layouts/EditorialLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => +b.data.date - +a.data.date,
+);
+
+const fmtDate = (d: Date) =>
+  d.toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" });
+---
+
+<EditorialLayout
+  title="Блог — oipav.ru"
+  description="Заметки о математике, преподавании и инструментах, которые я делаю."
+  pageTitle="Блог"
+>
+  <p class="mb-10 text-base" style="color: var(--color-paper-muted);">
+    Заметки о математике, преподавании и инструментах, которые я делаю. Без расписания
+    — пишу, когда есть что зафиксировать.
+  </p>
+
+  {
+    posts.length === 0 ? (
+      <p class="kicker">Здесь пока пусто.</p>
+    ) : (
+      <ol class="space-y-8">
+        {posts.map((post) => (
+          <li class="rule pt-6">
+            <div class="kicker mb-2">
+              {fmtDate(post.data.date)} · {post.data.category}
+            </div>
+            <h2 class="mb-2 text-2xl">
+              <a href={`/blog/${post.id}`}>{post.data.title}</a>
+            </h2>
+            {post.data.description && (
+              <p class="text-base" style="color: var(--color-paper-muted);">
+                {post.data.description}
+              </p>
+            )}
+          </li>
+        ))}
+      </ol>
+    )
+  }
+</EditorialLayout>

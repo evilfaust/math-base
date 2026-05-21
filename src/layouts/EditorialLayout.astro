@@ -1,0 +1,36 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import "katex/dist/katex.min.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  pageTitle?: string;
+}
+
+const { title, description, pageTitle } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} bodyClass="editorial">
+  <div class="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
+    <header class="mb-12 flex items-center justify-between text-sm">
+      <a href="/" class="font-mono kicker hover:opacity-70">← ~/oipav.ru</a>
+      <a href="/blog" class="kicker hover:opacity-70">Блог</a>
+    </header>
+    {
+      pageTitle && (
+        <h1 class="mb-8 text-3xl sm:text-4xl">{pageTitle}</h1>
+      )
+    }
+    <slot />
+
+    <footer class="rule mt-20 pt-6 text-xs" style="color: var(--color-paper-muted);">
+      <div class="flex items-center justify-between">
+        <span>evilfaust · {new Date().getFullYear()}</span>
+        <a href="https://github.com/evilfaust" target="_blank" rel="noopener noreferrer">
+          github.com/evilfaust
+        </a>
+      </div>
+    </footer>
+  </div>
+</BaseLayout>

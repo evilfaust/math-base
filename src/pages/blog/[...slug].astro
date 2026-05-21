@@ -1,0 +1,53 @@
+---
+import EditorialLayout from "~/layouts/EditorialLayout.astro";
+import { getCollection, render } from "astro:content";
+import readingTime from "reading-time";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const fmtDate = (d: Date) =>
+  d.toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" });
+
+const rt = readingTime(post.body ?? "").minutes;
+const rtLabel = `${Math.max(1, Math.round(rt))} мин чтения`;
+---
+
+<EditorialLayout
+  title={`${post.data.title} — Блог`}
+  description={post.data.description}
+>
+  <article>
+    <div class="kicker mb-3">
+      {fmtDate(post.data.date)} · {post.data.category} · {rtLabel}
+    </div>
+    <h1 class="mb-3 text-3xl sm:text-4xl leading-tight">{post.data.title}</h1>
+    {
+      post.data.description && (
+        <p class="mb-10 text-lg" style="color: var(--color-paper-muted);">
+          {post.data.description}
+        </p>
+      )
+    }
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {
+      post.data.tags.length > 0 && (
+        <div class="rule mt-12 pt-6 kicker">
+          {post.data.tags.map((t) => `#${t}`).join("  ")}
+        </div>
+      )
+    }
+  </article>
+</EditorialLayout>
