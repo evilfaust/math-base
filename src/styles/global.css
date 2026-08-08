@@ -3,7 +3,7 @@
 @theme {
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo,
     monospace;
-  --font-serif: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
+  --font-serif: "Literata Variable", "Iowan Old Style", Georgia, serif;
   --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --color-terminal-bg: #07080c;

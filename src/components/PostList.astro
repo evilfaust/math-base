@@ -1,0 +1,124 @@
+---
+import { categoryUrl, fmtDate, tagUrl, type Post } from "~/lib/blog";
+
+interface Props {
+  posts: Post[];
+  /** Список используется и как результат поиска — тогда управляем разметкой снаружи. */
+  id?: string;
+}
+
+const { posts, id } = Astro.props;
+---
+
+<ol class="post-list" id={id}>
+  {
+    posts.map((post) => (
+      <li class="post-row">
+        {post.data.cover && (
+          <a href={`/blog/${post.id}`} class="cover-link" tabindex="-1" aria-hidden="true">
+            <img src={post.data.cover} alt="" loading="lazy" decoding="async" />
+          </a>
+        )}
+        <div class="post-body">
+          <div class="kicker mb-2">
+            {fmtDate(post.data.date)} ·{" "}
+            <a href={categoryUrl(post.data.category)}>{post.data.category}</a>
+          </div>
+          <h2 class="post-title">
+            <a href={`/blog/${post.id}`}>{post.data.title}</a>
+          </h2>
+          {post.data.description && <p class="post-desc">{post.data.description}</p>}
+          {post.data.tags.length > 0 && (
+            <ul class="tag-row">
+              {post.data.tags.map((t) => (
+                <li>
+                  <a href={tagUrl(t)}>#{t}</a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+{posts.length === 0 && <p class="kicker">Здесь пока пусто.</p>}
+
+<style>
+  .post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .post-row {
+    display: grid;
+    gap: 1rem;
+    border-top: 1px solid var(--color-paper-rule);
+    padding-top: 1.5rem;
+  }
+  /* Обложка уходит вбок только когда для неё есть место. */
+  @media (min-width: 34rem) {
+    .post-row:has(.cover-link) {
+      grid-template-columns: 12rem 1fr;
+      align-items: start;
+    }
+  }
+
+  .cover-link {
+    display: block;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.04);
+    text-decoration: none;
+  }
+  .cover-link img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+
+  .post-title {
+    margin: 0 0 0.4rem;
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+  .post-title a {
+    text-decoration: none;
+    color: var(--color-paper-fg);
+  }
+  .post-title a:hover {
+    color: var(--color-paper-accent);
+  }
+
+  .post-desc {
+    margin: 0;
+    color: var(--color-paper-muted);
+    line-height: 1.6;
+  }
+
+  .tag-row {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0.7rem 0 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+  }
+  .tag-row a {
+    color: var(--color-paper-muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-paper-rule);
+  }
+  .tag-row a:hover {
+    color: var(--color-paper-accent);
+    border-bottom-color: currentColor;
+  }
+</style>

@@ -1,0 +1,32 @@
+---
+import EditorialLayout from "~/layouts/EditorialLayout.astro";
+import PostList from "~/components/PostList.astro";
+import { collectTags, getPosts } from "~/lib/blog";
+import { slugify } from "~/lib/slug";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return collectTags(posts).map((tag) => ({
+    params: { tag: tag.slug },
+    props: {
+      tag,
+      posts: posts.filter((p) => p.data.tags.some((t) => slugify(t) === tag.slug)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<EditorialLayout
+  title={`#${tag.name} — Блог oipav.ru`}
+  description={`Записи с тегом «${tag.name}».`}
+  pageTitle={`#${tag.name}`}
+>
+  <p class="kicker mb-10">
+    <a href="/blog">Все записи</a> · тег «{tag.name}» · {tag.count}
+    {tag.count === 1 ? "запись" : tag.count < 5 ? "записи" : "записей"}
+  </p>
+
+  <PostList posts={posts} />
+</EditorialLayout>

@@ -1,0 +1,1245 @@
+---
+// Админка блога. Подключается только в dev через src/admin/integration.mjs —
+// в собранный сайт этот файл не попадает.
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/literata";
+import "~/styles/global.css";
+import "katex/dist/katex.min.css";
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Админка блога — oipav.ru</title>
+  </head>
+  <body class="admin">
+    <header class="bar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">&gt;_</span>
+        <span>Админка блога</span>
+      </div>
+      <div class="bar-right">
+        <span id="saveState" class="state" data-state="idle">Нет изменений</span>
+        <button id="btnSave" class="btn" type="button">Сохранить <kbd>⌘S</kbd></button>
+        <button id="btnPublish" class="btn btn-primary" type="button">Опубликовать</button>
+        <a href="/blog" class="btn btn-ghost" target="_blank" rel="noopener">Блог ↗</a>
+      </div>
+    </header>
+
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="side-head">
+          <button id="btnNew" class="btn btn-primary w-full" type="button">
+            + Новая запись
+          </button>
+          <input id="filter" class="field mt-2" type="search" placeholder="Поиск по записям…" />
+        </div>
+        <ul id="postList" class="post-list"></ul>
+      </aside>
+
+      <section id="editor" class="editor" hidden>
+        <div class="meta">
+          <input
+            id="fTitle"
+            class="field title-field"
+            type="text"
+            placeholder="Заголовок записи"
+            autocomplete="off"
+          />
+
+          <div class="slug-row">
+            <span class="slug-label">/blog/</span>
+            <input id="fSlug" class="field slug-field" type="text" autocomplete="off" />
+            <span id="slugAuto" class="hint">адрес собирается из заголовка</span>
+          </div>
+
+          <div class="grid-3">
+            <label class="lbl">
+              Дата
+              <input id="fDate" class="field" type="date" />
+            </label>
+            <label class="lbl">
+              Категория
+              <input id="fCategory" class="field" list="dlCategories" autocomplete="off" />
+              <datalist id="dlCategories"></datalist>
+            </label>
+            <label class="lbl">
+              Теги <span class="hint">через запятую</span>
+              <input id="fTags" class="field" list="dlTags" autocomplete="off" />
+              <datalist id="dlTags"></datalist>
+            </label>
+          </div>
+
+          <label class="lbl">
+            Описание <span class="hint">попадёт в список записей и в превью ссылки</span>
+            <textarea id="fDescription" class="field" rows="2"></textarea>
+          </label>
+
+          <div class="cover-row">
+            <label class="lbl grow">
+              Обложка
+              <input id="fCover" class="field" type="text" placeholder="/images/posts/…" />
+            </label>
+            <button id="btnCover" class="btn" type="button">Загрузить</button>
+            <img id="coverPreview" class="cover-thumb" alt="" hidden />
+          </div>
+
+          <div class="switch-row">
+            <label class="switch">
+              <input id="fDraft" type="checkbox" />
+              <span>Черновик <span class="hint">не публикуется на сайте</span></span>
+            </label>
+            <button id="btnDelete" class="btn btn-danger" type="button">Удалить запись</button>
+          </div>
+        </div>
+
+        <div class="toolbar" id="toolbar">
+          <button class="tool" data-md="bold" title="Полужирный (⌘B)"><b>B</b></button>
+          <button class="tool" data-md="italic" title="Курсив (⌘I)"><i>I</i></button>
+          <span class="sep"></span>
+          <button class="tool" data-md="h2" title="Заголовок 2">H2</button>
+          <button class="tool" data-md="h3" title="Заголовок 3">H3</button>
+          <span class="sep"></span>
+          <button class="tool" data-md="ul" title="Маркированный список">•</button>
+          <button class="tool" data-md="ol" title="Нумерованный список">1.</button>
+          <button class="tool" data-md="quote" title="Цитата">❝</button>
+          <span class="sep"></span>
+          <button class="tool" data-md="link" title="Ссылка (⌘K)">Ссылка</button>
+          <button class="tool" data-md="code" title="Блок кода">Код</button>
+          <button class="tool" data-md="math" title="Формула в строке">ƒ</button>
+          <button class="tool" data-md="mathBlock" title="Формула отдельным блоком">ƒ блок</button>
+          <button class="tool" data-md="image" title="Вставить картинку">Картинка</button>
+          <span class="grow"></span>
+          <span id="counter" class="hint"></span>
+        </div>
+
+        <div class="panes">
+          <div class="pane">
+            <textarea
+              id="fBody"
+              class="body-input"
+              spellcheck="true"
+              placeholder="Текст записи в Markdown. Картинку можно просто перетащить сюда или вставить из буфера."
+            ></textarea>
+            <div id="dropHint" class="drop-hint" hidden>Отпустите — загружу картинку</div>
+          </div>
+          <div class="pane preview-pane">
+            <div class="editorial preview-surface">
+              <article id="preview" class="prose"></article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="empty" class="empty">
+        <p>Выберите запись слева или создайте новую.</p>
+      </section>
+    </main>
+
+    <div id="modal" class="modal" hidden>
+      <div class="modal-box">
+        <h2 id="modalTitle">Публикация</h2>
+        <div id="modalBody"></div>
+        <div class="modal-actions">
+          <button id="modalCancel" class="btn" type="button">Отмена</button>
+          <button id="modalOk" class="btn btn-primary" type="button">Опубликовать</button>
+        </div>
+      </div>
+    </div>
+
+    <input id="filePicker" type="file" accept="image/*" hidden />
+    <div id="toast" class="toast" hidden></div>
+
+    <style is:global>
+      /* Чрезвычайно узкий скоуп: только страница админки. */
+      body.admin {
+        margin: 0;
+        background: #0b0d12;
+        color: #e8e6e1;
+        font-family: var(--font-sans);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .admin .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        background: #0f1219;
+        flex: none;
+      }
+      .admin .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+      }
+      .admin .mark {
+        display: grid;
+        place-items: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: 7px;
+        background: linear-gradient(135deg, #ffb020, #f472b6 55%, #a78bfa);
+        color: #000;
+        font-weight: 700;
+        font-size: 0.7rem;
+      }
+      .admin .bar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .admin .state {
+        font-size: 0.78rem;
+        color: #8d8779;
+        font-family: var(--font-mono);
+      }
+      .admin .state[data-state="dirty"] {
+        color: #ffb020;
+      }
+      .admin .state[data-state="saved"] {
+        color: #34d399;
+      }
+      .admin .state[data-state="error"] {
+        color: #f87171;
+      }
+
+      .admin .btn {
+        padding: 0.4rem 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: background 160ms ease, border-color 160ms ease;
+        white-space: nowrap;
+      }
+      .admin .btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.24);
+      }
+      .admin .btn:focus-visible {
+        outline: 2px solid #ffb020;
+        outline-offset: 2px;
+      }
+      .admin .btn-primary {
+        background: linear-gradient(135deg, #ffb020, #f59e0b);
+        border-color: transparent;
+        color: #1a1200;
+        font-weight: 600;
+      }
+      .admin .btn-primary:hover {
+        filter: brightness(1.08);
+        background: linear-gradient(135deg, #ffb020, #f59e0b);
+      }
+      .admin .btn-danger {
+        color: #f87171;
+        border-color: rgba(248, 113, 113, 0.3);
+      }
+      .admin .btn-danger:hover {
+        background: rgba(248, 113, 113, 0.12);
+      }
+      .admin .btn-ghost {
+        text-decoration: none;
+      }
+      .admin .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .admin kbd {
+        font-family: var(--font-mono);
+        font-size: 0.72em;
+        opacity: 0.65;
+        margin-left: 0.3em;
+      }
+      .admin .w-full {
+        width: 100%;
+      }
+      .admin .grow {
+        flex: 1;
+      }
+      .admin .mt-2 {
+        margin-top: 0.5rem;
+      }
+
+      .admin .shell {
+        display: grid;
+        grid-template-columns: 264px 1fr;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .admin .sidebar {
+        border-right: 1px solid rgba(255, 255, 255, 0.09);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: #0d1016;
+      }
+      .admin .side-head {
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        flex: none;
+      }
+      .admin .post-list {
+        list-style: none;
+        margin: 0;
+        padding: 0.5rem;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .admin .post-item {
+        padding: 0.55rem 0.6rem;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+      .admin .post-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .admin .post-item[aria-current="true"] {
+        background: rgba(255, 176, 32, 0.1);
+        border-color: rgba(255, 176, 32, 0.32);
+      }
+      .admin .post-item h3 {
+        margin: 0;
+        font-size: 0.86rem;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      .admin .post-item .row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.2rem;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: #8d8779;
+      }
+      .admin .badge {
+        padding: 0 0.35em;
+        border-radius: 4px;
+        background: rgba(255, 176, 32, 0.16);
+        color: #ffb020;
+      }
+
+      .admin .editor {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        min-width: 0;
+      }
+      .admin .empty {
+        display: grid;
+        place-items: center;
+        color: #8d8779;
+      }
+
+      .admin .meta {
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        flex: none;
+        overflow-y: auto;
+        max-height: 46vh;
+      }
+      .admin .field {
+        width: 100%;
+        padding: 0.4rem 0.55rem;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.04);
+        color: inherit;
+        font: inherit;
+        font-size: 0.85rem;
+      }
+      .admin .field:focus {
+        outline: none;
+        border-color: #ffb020;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .admin .title-field {
+        font-size: 1.25rem;
+        font-weight: 600;
+        padding: 0.5rem 0.6rem;
+      }
+      .admin .lbl {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: #a8a296;
+      }
+      .admin .hint {
+        color: #6f6a5e;
+        font-size: 0.72rem;
+        font-weight: 400;
+      }
+      .admin .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.6rem;
+      }
+      .admin .slug-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+      }
+      .admin .slug-label {
+        color: #6f6a5e;
+      }
+      .admin .slug-field {
+        flex: 1;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+      }
+      .admin .cover-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.5rem;
+      }
+      .admin .cover-thumb {
+        height: 2.4rem;
+        width: 4rem;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .admin .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .admin .switch {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+
+      .admin .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.4rem 0.6rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        background: #0f1219;
+        flex: none;
+        flex-wrap: wrap;
+      }
+      .admin .tool {
+        min-width: 2rem;
+        height: 1.9rem;
+        padding: 0 0.5rem;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: transparent;
+        color: #cdc9bf;
+        font: inherit;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .admin .tool:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .admin .tool:focus-visible {
+        outline: 2px solid #ffb020;
+        outline-offset: 1px;
+      }
+      .admin .sep {
+        width: 1px;
+        height: 1.1rem;
+        background: rgba(255, 255, 255, 0.12);
+        margin: 0 0.3rem;
+      }
+
+      .admin .panes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        flex: 1;
+        min-height: 0;
+      }
+      .admin .pane {
+        position: relative;
+        min-width: 0;
+        overflow: auto;
+      }
+      .admin .body-input {
+        width: 100%;
+        height: 100%;
+        padding: 1rem 1.1rem;
+        border: 0;
+        resize: none;
+        background: transparent;
+        color: #e8e6e1;
+        font-family: var(--font-mono);
+        font-size: 0.86rem;
+        line-height: 1.7;
+        outline: none;
+        display: block;
+      }
+      .admin .preview-pane {
+        border-left: 1px solid rgba(255, 255, 255, 0.09);
+      }
+      /* Настоящая палитра блога, чтобы предпросмотр не врал. */
+      .admin .preview-surface {
+        min-height: 100%;
+        padding: 1.6rem 1.8rem;
+      }
+      .admin .preview-surface .prose {
+        max-width: 42rem;
+        margin: 0 auto;
+      }
+      .admin .preview-error {
+        margin: 0;
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        background: rgba(248, 113, 113, 0.12);
+        border: 1px solid rgba(248, 113, 113, 0.35);
+        color: #b91c1c;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+      }
+
+      .admin .drop-hint {
+        position: absolute;
+        inset: 0.6rem;
+        display: grid;
+        place-items: center;
+        border: 2px dashed #ffb020;
+        border-radius: 12px;
+        background: rgba(255, 176, 32, 0.1);
+        color: #ffb020;
+        font-size: 0.9rem;
+        pointer-events: none;
+      }
+
+      .admin .modal {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 50;
+      }
+      .admin .modal-box {
+        width: min(30rem, 92vw);
+        max-height: 80vh;
+        overflow: auto;
+        padding: 1.2rem;
+        border-radius: 14px;
+        background: #12151d;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .admin .modal-box h2 {
+        margin: 0 0 0.7rem;
+        font-size: 1.05rem;
+      }
+      .admin .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      .admin .change-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: #a8a296;
+      }
+      .admin .change-list li {
+        padding: 0.15rem 0;
+      }
+
+      .admin .toast {
+        position: fixed;
+        bottom: 1rem;
+        left: 50%;
+        translate: -50% 0;
+        padding: 0.55rem 1rem;
+        border-radius: 9px;
+        background: #12151d;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        font-size: 0.83rem;
+        z-index: 60;
+      }
+      .admin .toast[data-kind="error"] {
+        border-color: rgba(248, 113, 113, 0.5);
+        color: #fca5a5;
+      }
+      .admin .toast[data-kind="ok"] {
+        border-color: rgba(52, 211, 153, 0.5);
+        color: #6ee7b7;
+      }
+
+      @media (max-width: 900px) {
+        .admin .shell {
+          grid-template-columns: 1fr;
+        }
+        .admin .sidebar {
+          display: none;
+        }
+        .admin .panes {
+          grid-template-columns: 1fr;
+        }
+        .admin .preview-pane {
+          display: none;
+        }
+      }
+    </style>
+
+    <script>
+      // ── типы ───────────────────────────────────────────────────────────
+      interface PostMeta {
+        slug: string;
+        title: string;
+        date: string;
+        description: string;
+        category: string;
+        tags: string[];
+        cover?: string;
+        draft: boolean;
+      }
+      interface PostFull extends PostMeta {
+        body: string;
+      }
+
+      // ── состояние ──────────────────────────────────────────────────────
+      const state = {
+        loadedSlug: null as string | null,
+        slugTouched: false,
+        dirty: false,
+        saving: false,
+      };
+      let posts: PostMeta[] = [];
+
+      /** Падает сразу, если разметка разошлась со скриптом, а не молча позже. */
+      const $ = <T extends HTMLElement>(id: string): T => {
+        const node = document.getElementById(id);
+        if (!node) throw new Error(`Админка: не найден элемент #${id}`);
+        return node as T;
+      };
+
+      const els = {
+        list: $<HTMLUListElement>("postList"),
+        filter: $<HTMLInputElement>("filter"),
+        editor: $("editor"),
+        empty: $("empty"),
+        title: $<HTMLInputElement>("fTitle"),
+        slug: $<HTMLInputElement>("fSlug"),
+        slugAuto: $("slugAuto"),
+        date: $<HTMLInputElement>("fDate"),
+        category: $<HTMLInputElement>("fCategory"),
+        tags: $<HTMLInputElement>("fTags"),
+        description: $<HTMLTextAreaElement>("fDescription"),
+        cover: $<HTMLInputElement>("fCover"),
+        coverPreview: $<HTMLImageElement>("coverPreview"),
+        draft: $<HTMLInputElement>("fDraft"),
+        body: $<HTMLTextAreaElement>("fBody"),
+        preview: $("preview"),
+        counter: $("counter"),
+        saveState: $("saveState"),
+        dlCategories: $("dlCategories"),
+        dlTags: $("dlTags"),
+        dropHint: $("dropHint"),
+        filePicker: $<HTMLInputElement>("filePicker"),
+        toast: $("toast"),
+        modal: $("modal"),
+        modalTitle: $("modalTitle"),
+        modalBody: $("modalBody"),
+        modalOk: $<HTMLButtonElement>("modalOk"),
+        modalCancel: $<HTMLButtonElement>("modalCancel"),
+      };
+
+      const today = () => new Date().toISOString().slice(0, 10);
+
+      // ── утилиты ────────────────────────────────────────────────────────
+      const msg = (err: unknown) =>
+        err instanceof Error ? err.message : String(err);
+
+      async function api(path: string, options?: RequestInit): Promise<any> {
+        const res = await fetch(`/api/admin/${path}`, options);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) throw new Error(data.error || `Ошибка ${res.status}`);
+        return data;
+      }
+
+      let toastTimer: ReturnType<typeof setTimeout>;
+      function toast(message: string, kind: "ok" | "error" = "ok") {
+        els.toast.textContent = message;
+        els.toast.dataset.kind = kind;
+        els.toast.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => (els.toast.hidden = true), kind === "error" ? 6000 : 2600);
+      }
+
+      function setDirty(on: boolean) {
+        state.dirty = on;
+        els.saveState.dataset.state = on ? "dirty" : "saved";
+        els.saveState.textContent = on ? "Есть несохранённые правки" : "Сохранено";
+      }
+
+      const TRANSLIT: Record<string, string> = {
+        а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"j",к:"k",л:"l",
+        м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"c",ч:"ch",ш:"sh",
+        щ:"sch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya",
+      };
+      const slugify = (s: string) =>
+        s.toLowerCase().split("").map((c) => (c in TRANSLIT ? TRANSLIT[c] : c)).join("")
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+
+      function autoSlug() {
+        const base = slugify(els.title.value) || "zapis";
+        return `${els.date.value || today()}-${base}`;
+      }
+
+      function syncAutoSlug() {
+        if (state.slugTouched) return;
+        els.slug.value = autoSlug();
+      }
+
+      // ── список записей ─────────────────────────────────────────────────
+      async function loadList() {
+        const data = await api("posts");
+        posts = data.posts;
+        els.dlCategories.innerHTML = "";
+        for (const c of data.categories) {
+          const o = document.createElement("option");
+          o.value = c;
+          els.dlCategories.append(o);
+        }
+        els.dlTags.innerHTML = "";
+        for (const t of data.tags) {
+          const o = document.createElement("option");
+          o.value = t;
+          els.dlTags.append(o);
+        }
+        renderList();
+      }
+
+      function renderList() {
+        const q = els.filter.value.trim().toLowerCase();
+        els.list.innerHTML = "";
+
+        const visible = posts.filter(
+          (p) =>
+            !q ||
+            p.title.toLowerCase().includes(q) ||
+            p.tags.join(" ").toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q),
+        );
+
+        if (!visible.length) {
+          const li = document.createElement("li");
+          li.className = "hint";
+          li.style.padding = "0.6rem";
+          li.textContent = posts.length ? "Ничего не найдено" : "Записей пока нет";
+          els.list.append(li);
+          return;
+        }
+
+        for (const p of visible) {
+          const li = document.createElement("li");
+          li.className = "post-item";
+          li.tabIndex = 0;
+          li.setAttribute("role", "button");
+          if (p.slug === state.loadedSlug) li.setAttribute("aria-current", "true");
+
+          const h = document.createElement("h3");
+          h.textContent = p.title; // textContent, а не innerHTML — заголовки произвольные
+          const row = document.createElement("div");
+          row.className = "row";
+          const date = document.createElement("span");
+          date.textContent = p.date;
+          row.append(date);
+          if (p.draft) {
+            const b = document.createElement("span");
+            b.className = "badge";
+            b.textContent = "черновик";
+            row.append(b);
+          }
+          const cat = document.createElement("span");
+          cat.textContent = p.category;
+          row.append(cat);
+
+          li.append(h, row);
+          const open = () => openPost(p.slug);
+          li.addEventListener("click", open);
+          li.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              open();
+            }
+          });
+          els.list.append(li);
+        }
+      }
+
+      // ── загрузка / создание записи ─────────────────────────────────────
+      async function guardUnsaved() {
+        if (!state.dirty) return true;
+        return confirm("Есть несохранённые правки. Продолжить и потерять их?");
+      }
+
+      async function openPost(slug: string) {
+        if (!(await guardUnsaved())) return;
+        try {
+          const p = await api(`posts?slug=${encodeURIComponent(slug)}`);
+          fill(p);
+          state.loadedSlug = slug;
+          state.slugTouched = true; // у существующей записи адрес менять только вручную
+          els.slugAuto.hidden = true;
+          setDirty(false);
+          show();
+          renderList();
+          refreshPreview();
+        } catch (err) {
+          toast(msg(err), "error");
+        }
+      }
+
+      function newPost() {
+        guardUnsaved().then((ok) => {
+          if (!ok) return;
+          fill({
+            title: "", date: today(), description: "", category: "Дневник",
+            tags: [], cover: "", draft: true, body: "",
+          });
+          state.loadedSlug = null;
+          state.slugTouched = false;
+          els.slugAuto.hidden = false;
+          syncAutoSlug();
+          setDirty(false);
+          show();
+          renderList();
+          refreshPreview();
+          els.title.focus();
+        });
+      }
+
+      function fill(p: Partial<PostFull>) {
+        els.title.value = p.title ?? "";
+        els.slug.value = p.slug ?? "";
+        els.date.value = (p.date ?? today()).slice(0, 10);
+        els.category.value = p.category ?? "Дневник";
+        els.tags.value = (p.tags ?? []).join(", ");
+        els.description.value = p.description ?? "";
+        els.cover.value = p.cover ?? "";
+        els.draft.checked = Boolean(p.draft);
+        els.body.value = p.body ?? "";
+        syncCoverPreview();
+        updateCounter();
+      }
+
+      function show() {
+        els.editor.hidden = false;
+        els.empty.hidden = true;
+      }
+
+      function collect() {
+        return {
+          slug: els.slug.value.trim(),
+          previousSlug: state.loadedSlug ?? undefined,
+          data: {
+            title: els.title.value,
+            date: els.date.value || today(),
+            description: els.description.value,
+            category: els.category.value,
+            tags: els.tags.value.split(",").map((t) => t.trim()).filter(Boolean),
+            cover: els.cover.value.trim(),
+            draft: els.draft.checked,
+          },
+          body: els.body.value,
+        };
+      }
+
+      // ── сохранение ─────────────────────────────────────────────────────
+      async function save() {
+        if (state.saving) return;
+        if (!els.title.value.trim()) {
+          toast("Нужен заголовок", "error");
+          els.title.focus();
+          return;
+        }
+        state.saving = true;
+        els.saveState.dataset.state = "idle";
+        els.saveState.textContent = "Сохраняю…";
+        try {
+          const payload = collect();
+          const { slug } = await api("posts", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          state.loadedSlug = slug;
+          state.slugTouched = true;
+          els.slugAuto.hidden = true;
+          els.slug.value = slug;
+          setDirty(false);
+          await loadList();
+          toast("Сохранено");
+        } catch (err) {
+          els.saveState.dataset.state = "error";
+          els.saveState.textContent = "Не сохранено";
+          toast(msg(err), "error");
+        } finally {
+          state.saving = false;
+        }
+      }
+
+      async function removePost() {
+        if (!state.loadedSlug) return;
+        if (!confirm(`Удалить запись «${els.title.value}»? Файл будет стёрт с диска.`)) return;
+        try {
+          await api(`posts?slug=${encodeURIComponent(state.loadedSlug)}`, { method: "DELETE" });
+          state.loadedSlug = null;
+          state.dirty = false;
+          els.editor.hidden = true;
+          els.empty.hidden = false;
+          await loadList();
+          toast("Запись удалена");
+        } catch (err) {
+          toast(msg(err), "error");
+        }
+      }
+
+      // ── предпросмотр ───────────────────────────────────────────────────
+      let previewTimer: ReturnType<typeof setTimeout>;
+      let previewSeq = 0;
+      function schedulePreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(refreshPreview, 260);
+      }
+
+      async function refreshPreview() {
+        const seq = ++previewSeq;
+        try {
+          const res = await fetch("/api/admin/preview", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ body: els.body.value }),
+          });
+          const data = await res.json();
+          if (seq !== previewSeq) return; // пришёл ответ на устаревший запрос
+          if (data.error) {
+            els.preview.innerHTML = "";
+            const pre = document.createElement("pre");
+            pre.className = "preview-error";
+            pre.textContent = data.error;
+            els.preview.append(pre);
+            return;
+          }
+          els.preview.innerHTML = data.html;
+        } catch {
+          /* dev-сервер перезапускается — молча ждём следующего ввода */
+        }
+      }
+
+      function updateCounter() {
+        const text = els.body.value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        const mins = Math.max(1, Math.round(words / 180));
+        els.counter.textContent = words
+          ? `${words} сл. · ~${mins} мин чтения`
+          : "пусто";
+      }
+
+      // ── панель инструментов ────────────────────────────────────────────
+      function surround(before: string, after: string = before, placeholder = "") {
+        const ta = els.body;
+        const { selectionStart: s, selectionEnd: e, value } = ta;
+        const selected = value.slice(s, e) || placeholder;
+        ta.value = value.slice(0, s) + before + selected + after + value.slice(e);
+        ta.focus();
+        ta.selectionStart = s + before.length;
+        ta.selectionEnd = s + before.length + selected.length;
+        onBodyInput();
+      }
+
+      function prefixLines(prefix: string) {
+        const ta = els.body;
+        const { selectionStart: s, selectionEnd: e, value } = ta;
+        const start = value.lastIndexOf("\n", s - 1) + 1;
+        const end = value.indexOf("\n", e) === -1 ? value.length : value.indexOf("\n", e);
+        const block = value.slice(start, end) || "";
+        const numbered = prefix === "1. ";
+        const out = block
+          .split("\n")
+          .map((line, i) => (numbered ? `${i + 1}. ` : prefix) + line.replace(/^([#>\-*]|\d+\.)\s*/, ""))
+          .join("\n");
+        ta.value = value.slice(0, start) + out + value.slice(end);
+        ta.focus();
+        ta.selectionStart = start;
+        ta.selectionEnd = start + out.length;
+        onBodyInput();
+      }
+
+      const TOOLS = {
+        bold: () => surround("**", "**", "текст"),
+        italic: () => surround("*", "*", "текст"),
+        h2: () => prefixLines("## "),
+        h3: () => prefixLines("### "),
+        ul: () => prefixLines("- "),
+        ol: () => prefixLines("1. "),
+        quote: () => prefixLines("> "),
+        link: () => surround("[", "](https://)", "текст ссылки"),
+        code: () => surround("```\n", "\n```", "код"),
+        math: () => surround("$", "$", "x^2"),
+        // remark-math делает display-формулу только когда $$ стоят на
+        // отдельных строках — кнопка избавляет от необходимости это помнить.
+        mathBlock: () => surround("\n$$\n", "\n$$\n", "\\int_0^1 x^2\\,dx"),
+        image: () => els.filePicker.click(),
+      };
+
+      // ── картинки ───────────────────────────────────────────────────────
+      let coverMode = false;
+
+      async function uploadImage(file: File) {
+        const fd = new FormData();
+        fd.append("file", file);
+        toast("Загружаю картинку…");
+        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return data;
+      }
+
+      async function handleFiles(files: Iterable<File>, asCover = false) {
+        for (const file of files) {
+          if (!file.type.startsWith("image/")) continue;
+          try {
+            const { url, bytes } = await uploadImage(file);
+            if (asCover) {
+              els.cover.value = url;
+              syncCoverPreview();
+            } else {
+              insertAtCursor(`\n![](${url})\n`);
+            }
+            setDirty(true);
+            toast(`Готово · ${Math.round(bytes / 1024)} КБ`);
+          } catch (err) {
+            toast(msg(err), "error");
+          }
+          if (asCover) break;
+        }
+      }
+
+      function insertAtCursor(text: string) {
+        const ta = els.body;
+        const { selectionStart: s, selectionEnd: e, value } = ta;
+        ta.value = value.slice(0, s) + text + value.slice(e);
+        ta.selectionStart = ta.selectionEnd = s + text.length;
+        ta.focus();
+        onBodyInput();
+      }
+
+      function syncCoverPreview() {
+        const url = els.cover.value.trim();
+        els.coverPreview.hidden = !url;
+        if (url) els.coverPreview.src = url;
+      }
+
+      // ── публикация ─────────────────────────────────────────────────────
+      function openModal(
+        title: string,
+        buildBody: (box: HTMLElement) => void,
+        onOk: () => Promise<void> | void,
+      ) {
+        els.modalTitle.textContent = title;
+        els.modalBody.innerHTML = "";
+        buildBody(els.modalBody);
+        els.modal.hidden = false;
+        els.modalOk.onclick = async () => {
+          els.modal.hidden = true;
+          await onOk();
+        };
+        els.modalCancel.onclick = () => (els.modal.hidden = true);
+      }
+
+      async function publish() {
+        if (state.dirty && !confirm("Есть несохранённые правки — они не попадут в публикацию. Продолжить?")) {
+          return;
+        }
+        let status;
+        try {
+          status = await api("git");
+        } catch (err) {
+          toast(msg(err), "error");
+          return;
+        }
+
+        openModal(
+          "Публикация",
+          (box) => {
+            const p = document.createElement("p");
+            p.style.margin = "0 0 0.6rem";
+            p.style.fontSize = "0.85rem";
+            const total = status.changes.length;
+            p.textContent = total
+              ? `Будет закоммичено файлов: ${total}. Плюс неотправленных коммитов: ${status.ahead}.`
+              : status.ahead
+                ? `Новых файлов нет, но есть неотправленных коммитов: ${status.ahead}.`
+                : "Изменений нет — публиковать нечего.";
+            box.append(p);
+
+            if (total) {
+              const ul = document.createElement("ul");
+              ul.className = "change-list";
+              for (const c of status.changes) {
+                const li = document.createElement("li");
+                li.textContent = `${c.status.padEnd(2)} ${c.path}`;
+                ul.append(li);
+              }
+              box.append(ul);
+            }
+
+            const warn = document.createElement("p");
+            warn.style.cssText = "margin:0.8rem 0 0;font-size:0.78rem;color:#ffb020";
+            warn.textContent = `Push в ветку ${status.branch} запустит сборку и выложит блог на oipav.ru.`;
+            box.append(warn);
+
+            els.modalOk.disabled = !total && !status.ahead;
+          },
+          async () => {
+            try {
+              toast("Публикую…");
+              const message = els.title.value.trim()
+                ? `Блог: ${els.title.value.trim()}`
+                : "Обновление блога";
+              await api("git", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ message }),
+              });
+              toast("Опубликовано — сборка запущена");
+            } catch (err) {
+              toast(msg(err), "error");
+            }
+          },
+        );
+      }
+
+      // ── события ────────────────────────────────────────────────────────
+      function onBodyInput() {
+        setDirty(true);
+        updateCounter();
+        schedulePreview();
+      }
+
+      els.body.addEventListener("input", onBodyInput);
+
+      for (const el of [els.title, els.date, els.category, els.tags, els.description, els.cover, els.draft, els.slug]) {
+        el.addEventListener("input", () => setDirty(true));
+      }
+      els.title.addEventListener("input", syncAutoSlug);
+      els.date.addEventListener("input", syncAutoSlug);
+      els.slug.addEventListener("input", () => {
+        state.slugTouched = true;
+        els.slugAuto.hidden = true;
+      });
+      els.cover.addEventListener("input", syncCoverPreview);
+      els.filter.addEventListener("input", renderList);
+
+      $("btnNew").addEventListener("click", newPost);
+      $("btnSave").addEventListener("click", save);
+      $("btnPublish").addEventListener("click", publish);
+      $("btnDelete").addEventListener("click", removePost);
+      $("btnCover").addEventListener("click", () => {
+        coverMode = true;
+        els.filePicker.click();
+      });
+
+      els.filePicker.addEventListener("change", async () => {
+        const asCover = coverMode;
+        coverMode = false;
+        if (els.filePicker.files?.length) await handleFiles(els.filePicker.files, asCover);
+        els.filePicker.value = "";
+      });
+
+      $("toolbar").addEventListener("click", (e) => {
+        const btn = (e.target as HTMLElement | null)?.closest<HTMLElement>(".tool");
+        const action = btn?.dataset.md;
+        if (!action || !(action in TOOLS)) return;
+        e.preventDefault();
+        TOOLS[action as keyof typeof TOOLS]();
+      });
+
+      // перетаскивание и вставка картинок прямо в текст
+      const pane = els.body.parentElement as HTMLElement;
+      pane.addEventListener("dragover", (e) => {
+        if (!e.dataTransfer?.types.includes("Files")) return;
+        e.preventDefault();
+        els.dropHint.hidden = false;
+      });
+      pane.addEventListener("dragleave", () => (els.dropHint.hidden = true));
+      pane.addEventListener("drop", async (e) => {
+        if (!e.dataTransfer?.files.length) return;
+        e.preventDefault();
+        els.dropHint.hidden = true;
+        await handleFiles(e.dataTransfer.files);
+      });
+      els.body.addEventListener("paste", async (e) => {
+        const files = [...(e.clipboardData?.files ?? [])];
+        if (!files.length) return;
+        e.preventDefault();
+        await handleFiles(files);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        const mod = e.metaKey || e.ctrlKey;
+        if (!mod) return;
+        const key = e.key.toLowerCase();
+        if (key === "s") {
+          e.preventDefault();
+          save();
+        } else if (key === "b" && document.activeElement === els.body) {
+          e.preventDefault();
+          TOOLS.bold();
+        } else if (key === "i" && document.activeElement === els.body) {
+          e.preventDefault();
+          TOOLS.italic();
+        } else if (key === "k" && document.activeElement === els.body) {
+          e.preventDefault();
+          TOOLS.link();
+        }
+      });
+
+      window.addEventListener("beforeunload", (e) => {
+        if (!state.dirty) return;
+        e.preventDefault(); // современным браузерам этого достаточно
+      });
+
+      // ── старт ──────────────────────────────────────────────────────────
+      loadList()
+        .then(() => {
+          setDirty(false);
+          els.saveState.textContent = "Нет изменений";
+          els.saveState.dataset.state = "idle";
+        })
+        .catch((err) => toast(msg(err), "error"));
+    </script>
+  </body>
+</html>

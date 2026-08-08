@@ -1,13 +1,17 @@
 ---
 import EditorialLayout from "~/layouts/EditorialLayout.astro";
-import { getCollection } from "astro:content";
+import PostList from "~/components/PostList.astro";
+import {
+  categoryUrl,
+  collectCategories,
+  collectTags,
+  getPosts,
+  tagUrl,
+} from "~/lib/blog";
 
-const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
-  (a, b) => +b.data.date - +a.data.date,
-);
-
-const fmtDate = (d: Date) =>
-  d.toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" });
+const posts = await getPosts();
+const categories = collectCategories(posts);
+const tags = collectTags(posts);
 ---
 
 <EditorialLayout
@@ -15,32 +19,289 @@ const fmtDate = (d: Date) =>
   description="Заметки о математике, преподавании и инструментах, которые я делаю."
   pageTitle="Блог"
 >
-  <p class="mb-10 text-base" style="color: var(--color-paper-muted);">
-    Заметки о математике, преподавании и инструментах, которые я делаю. Без расписания
-    — пишу, когда есть что зафиксировать.
+  <p class="mb-8 text-base" style="color: var(--color-paper-muted);">
+    Заметки о математике, преподавании и инструментах, которые я делаю. Без
+    расписания — пишу, когда есть что зафиксировать.
   </p>
 
+  <div class="search-wrap">
+    <label class="sr-only" for="q">Поиск по записям</label>
+    <input
+      id="q"
+      type="search"
+      class="search"
+      placeholder="Поиск по записям…"
+      autocomplete="off"
+    />
+    <p id="searchState" class="kicker mt-2" hidden></p>
+  </div>
+
   {
-    posts.length === 0 ? (
-      <p class="kicker">Здесь пока пусто.</p>
-    ) : (
-      <ol class="space-y-8">
-        {posts.map((post) => (
-          <li class="rule pt-6">
-            <div class="kicker mb-2">
-              {fmtDate(post.data.date)} · {post.data.category}
-            </div>
-            <h2 class="mb-2 text-2xl">
-              <a href={`/blog/${post.id}`}>{post.data.title}</a>
-            </h2>
-            {post.data.description && (
-              <p class="text-base" style="color: var(--color-paper-muted);">
-                {post.data.description}
-              </p>
-            )}
-          </li>
-        ))}
-      </ol>
+    (categories.length > 1 || tags.length > 0) && (
+      <div class="facets rule mt-8 pt-6">
+        {categories.length > 1 && (
+          <div class="facet">
+            <span class="kicker">Рубрики</span>
+            <ul>
+              {categories.map((c) => (
+                <li>
+                  <a href={categoryUrl(c.name)}>
+                    {c.name} <span class="count">{c.count}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {tags.length > 0 && (
+          <div class="facet">
+            <span class="kicker">Теги</span>
+            <ul>
+              {tags.map((t) => (
+                <li>
+                  <a href={tagUrl(t.name)}>
+                    #{t.name} <span class="count">{t.count}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     )
   }
+
+  <div id="allPosts" class="mt-10">
+    <PostList posts={posts} />
+  </div>
+
+  <ol id="results" class="results mt-10" hidden></ol>
 </EditorialLayout>
+
+<script>
+  const el = <T extends HTMLElement>(id: string): T => {
+    const node = document.getElementById(id);
+    if (!node) throw new Error(`Поиск: не найден элемент #${id}`);
+    return node as T;
+  };
+
+  const input = el<HTMLInputElement>("q");
+  const results = el<HTMLOListElement>("results");
+  const all = el("allPosts");
+  const state = el("searchState");
+
+  interface Entry {
+    slug: string;
+    title: string;
+    description: string;
+    category: string;
+    tags: string[];
+    date: string;
+    text: string;
+  }
+
+  let index: Entry[] | null = null;
+  let loading: Promise<Entry[]> | null = null;
+
+  /** Индекс тянем при первом вводе, а не при загрузке страницы. */
+  function loadIndex(): Promise<Entry[]> {
+    return (loading ??= fetch("/blog/search.json")
+      .then((r) => r.json())
+      .then((data: Entry[]) => (index = data)));
+  }
+
+  const norm = (s: string) => s.toLowerCase().replace(/ё/g, "е");
+
+  /**
+   * Русский язык словоизменителен: запрос «математика» обязан находить
+   * «о математике». Полноценный стеммер здесь избыточен — достаточно срезать
+   * у слова запроса типовое окончание и искать получившийся корень как
+   * подстроку. Индекс при этом остаётся сырым текстом.
+   */
+  const ENDINGS = [
+    "иями", "ями", "ами", "ого", "его", "ому", "ему", "ыми", "ими",
+    "ая", "яя", "ое", "ее", "ые", "ый", "ий", "ой", "ей", "ую", "юю",
+    "ах", "ях", "ам", "ям", "ов", "ев", "ыx", "их", "ых",
+    "а", "я", "о", "е", "у", "ю", "ы", "и", "ь", "й",
+  ];
+
+  function stem(word: string): string {
+    for (const end of ENDINGS) {
+      // Корень короче четырёх букв слишком неразборчив: «дом» → «до»
+      // начал бы совпадать с «доска», «долго» и половиной словаря.
+      if (word.length - end.length >= 4 && word.endsWith(end)) {
+        return word.slice(0, -end.length);
+      }
+    }
+    return word;
+  }
+
+  function score(entry: Entry, terms: string[]): number {
+    const title = norm(entry.title);
+    const meta = norm(`${entry.description} ${entry.category} ${entry.tags.join(" ")}`);
+    const body = norm(entry.text);
+
+    let total = 0;
+    for (const term of terms) {
+      // Каждое слово запроса должно найтись хоть где-то, иначе запись не подходит.
+      if (title.includes(term)) total += 10;
+      else if (meta.includes(term)) total += 5;
+      else if (body.includes(term)) total += 1;
+      else return 0;
+    }
+    return total;
+  }
+
+  function plural(n: number, one: string, few: string, many: string): string {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
+  function render(entries: Entry[]) {
+    results.innerHTML = "";
+    for (const e of entries) {
+      const li = document.createElement("li");
+      li.className = "result";
+
+      const kicker = document.createElement("div");
+      kicker.className = "kicker";
+      kicker.textContent = `${e.date} · ${e.category}`;
+
+      const h = document.createElement("h2");
+      const a = document.createElement("a");
+      a.href = `/blog/${e.slug}`;
+      a.textContent = e.title; // произвольный текст — только textContent
+      h.append(a);
+
+      li.append(kicker, h);
+
+      if (e.description) {
+        const p = document.createElement("p");
+        p.textContent = e.description;
+        li.append(p);
+      }
+      results.append(li);
+    }
+  }
+
+  let timer: ReturnType<typeof setTimeout>;
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(run, 120);
+  });
+
+  async function run() {
+    const q = input.value.trim();
+    if (!q) {
+      results.hidden = true;
+      all.hidden = false;
+      state.hidden = true;
+      return;
+    }
+
+    const data = index ?? (await loadIndex());
+    const terms = norm(q).split(/\s+/).filter(Boolean).map(stem);
+
+    const hits = data
+      .map((e) => ({ e, s: score(e, terms) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s || b.e.date.localeCompare(a.e.date))
+      .map((x) => x.e);
+
+    all.hidden = true;
+    results.hidden = false;
+    state.hidden = false;
+    state.textContent = hits.length
+      ? `${hits.length} ${plural(hits.length, "запись", "записи", "записей")}`
+      : "Ничего не найдено";
+    render(hits);
+  }
+</script>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .search {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--color-paper-rule);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--color-paper-fg);
+    font: inherit;
+    font-size: 0.95rem;
+  }
+  .search:focus {
+    outline: 2px solid var(--color-paper-accent);
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+
+  .facets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  .facet ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.9rem;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    font-size: 0.9rem;
+  }
+  .facet a {
+    text-decoration: none;
+    color: var(--color-paper-fg);
+    border-bottom: 1px solid var(--color-paper-rule);
+  }
+  .facet a:hover {
+    color: var(--color-paper-accent);
+    border-bottom-color: currentColor;
+  }
+  .facet .count {
+    color: var(--color-paper-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72em;
+  }
+
+  .results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+  .results .result {
+    border-top: 1px solid var(--color-paper-rule);
+    padding-top: 1.25rem;
+  }
+  .results h2 {
+    margin: 0.3rem 0 0.3rem;
+    font-size: 1.35rem;
+    line-height: 1.25;
+  }
+  .results h2 a {
+    text-decoration: none;
+    color: var(--color-paper-fg);
+  }
+  .results h2 a:hover {
+    color: var(--color-paper-accent);
+  }
+  .results p {
+    margin: 0;
+    color: var(--color-paper-muted);
+  }
+</style>
