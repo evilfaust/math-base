@@ -6,16 +6,21 @@
   --font-serif: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
   --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-terminal-bg: #0e1014;
-  --color-terminal-panel: #14171d;
-  --color-terminal-fg: #e6e1d6;
-  --color-terminal-muted: #8a8578;
-  --color-terminal-dim: #4a4639;
-  --color-terminal-accent: #f5a524;
+  --color-terminal-bg: #07080c;
+  --color-terminal-panel: #0f1219;
+  --color-terminal-fg: #ecebe6;
+  /* Pre-blended instead of an opacity, which would create a stacking context
+     and paint over the full-card link overlay. */
+  --color-terminal-fg-soft: #c6c4bd;
+  --color-terminal-muted: #9c968a;
+  --color-terminal-dim: #5b5648;
+  --color-terminal-accent: #ffb020;
   --color-terminal-accent-soft: #c08a1f;
-  --color-terminal-green: #7bb273;
-  --color-terminal-red: #d96c5a;
-  --color-terminal-blue: #6ba4c4;
+  --color-terminal-green: #34d399;
+  --color-terminal-red: #f87171;
+  --color-terminal-blue: #38bdf8;
+  --color-terminal-violet: #a78bfa;
+  --color-terminal-pink: #f472b6;
 
   --color-paper-bg: #faf7f0;
   --color-paper-fg: #1a1815;
@@ -43,11 +48,62 @@ html {
   font-family: var(--font-mono);
   font-feature-settings: "ss01", "ss02", "cv01";
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Aurora backdrop — the colour bath everything else sits in */
+.terminal::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background:
+    radial-gradient(48rem 34rem at 10% -8%, rgba(99, 102, 241, 0.3), transparent 62%),
+    radial-gradient(42rem 30rem at 92% 2%, rgba(236, 72, 153, 0.22), transparent 62%),
+    radial-gradient(40rem 30rem at 74% 96%, rgba(20, 184, 166, 0.2), transparent 62%),
+    radial-gradient(36rem 26rem at 2% 84%, rgba(255, 176, 32, 0.16), transparent 62%);
+  animation: aurora 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Faint blueprint grid, faded out toward the bottom */
+.terminal::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(90% 65% at 50% 0%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(90% 65% at 50% 0%, #000 0%, transparent 78%);
+}
+
+@keyframes aurora {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-2.5%, 2%, 0) scale(1.1);
+  }
+  100% {
+    transform: translate3d(2.5%, -1.5%, 0) scale(1.05);
+  }
 }
 
 .terminal a {
   color: inherit;
   text-decoration: none;
+}
+
+.terminal a:focus-visible,
+.terminal button:focus-visible {
+  outline: 2px solid var(--color-terminal-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .terminal .accent {
@@ -65,43 +121,254 @@ html {
   color: var(--color-terminal-accent);
 }
 
-.terminal .chip {
+/* Animated gradient wash for display type */
+.terminal .grad {
+  background: linear-gradient(
+    100deg,
+    #ffb020,
+    #f472b6 34%,
+    #a78bfa 60%,
+    #38bdf8 82%,
+    #ffb020
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 12s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 220% 0;
+  }
+}
+
+.terminal .caret {
   display: inline-block;
-  padding: 0 0.4em;
-  border: 1px solid var(--color-terminal-dim);
-  color: var(--color-terminal-muted);
-  font-size: 0.75rem;
-  line-height: 1.4;
+  width: 0.55em;
+  height: 1.05em;
+  translate: 0 0.14em;
+  background: var(--color-terminal-accent);
+  animation: blink 1.15s steps(1) infinite;
 }
 
-.terminal .row {
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Cards ---------- */
+
+/* Every card carries its own --a (project accent); everything else derives. */
+.terminal .card {
+  --a: var(--color-terminal-accent);
+  --a-text: color-mix(in oklab, var(--a), #ffffff 28%);
+  --a-glow: color-mix(in srgb, var(--a) 16%, transparent);
+  --a-line: color-mix(in srgb, var(--a) 38%, transparent);
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  padding: 1.15rem 1.25rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.014)),
+    rgba(11, 13, 19, 0.72);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+/* Accent rule across the top edge. Negative z-index keeps both pseudo-elements
+   above the card background but below its content, which leaves the card's own
+   stacking context free for the full-card link overlay. */
+.terminal .card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: -1;
+  height: 2px;
+  background: linear-gradient(90deg, var(--a), transparent 72%);
+}
+
+/* Accent bloom that fades in on hover */
+.terminal .card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(26rem 16rem at 8% -25%, var(--a-glow), transparent 68%);
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+.terminal .card:hover,
+.terminal .card:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--a-line);
+  box-shadow:
+    0 20px 44px -20px color-mix(in srgb, var(--a) 60%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--a) 16%, transparent);
+}
+
+.terminal .card:hover::after,
+.terminal .card:focus-within::after {
+  opacity: 1;
+}
+
+/* Monogram tile — the project's accent as a solid visual anchor.
+   Wordmark logos are unreadable at this size, so the initial does the work. */
+.terminal .tile {
   display: grid;
-  grid-template-columns: 7ch 1fr;
-  gap: 1ch;
-  padding: 0.65rem 0.75rem;
-  border-bottom: 1px dashed var(--color-terminal-dim);
-  transition: background 120ms ease;
-}
-.terminal .row:hover {
-  background: rgba(245, 165, 36, 0.04);
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--a) 42%, transparent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--a) 34%, transparent),
+    color-mix(in srgb, var(--a) 9%, transparent)
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--a) 30%, transparent);
+  color: var(--a-text);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
-.terminal .row .status[data-s="public"] {
+.terminal .tile-lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 13px;
+  font-size: 1.4rem;
+}
+
+/* Quieter than a real content card — dashed, centred, no accent rule */
+.terminal .card-cta {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.018);
+}
+.terminal .card-cta::before {
+  content: none;
+}
+
+.terminal .chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--a) 28%, transparent);
+  background: color-mix(in srgb, var(--a) 11%, transparent);
+  color: var(--a-text);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.terminal .dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+}
+.terminal .dot[data-s="public"] {
+  animation: pulse 2.6s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+.terminal .status[data-s="public"] {
   color: var(--color-terminal-green);
 }
-.terminal .row .status[data-s="soon"] {
+.terminal .status[data-s="soon"] {
   color: var(--color-terminal-accent);
 }
-.terminal .row .status[data-s="private"] {
+.terminal .status[data-s="private"] {
   color: var(--color-terminal-red);
+}
+
+/* Inline links inside a card pick up that card's accent */
+.terminal .link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--a-text, var(--color-terminal-accent));
+  border-bottom: 1px solid transparent;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease;
+}
+.terminal .link:hover {
+  border-bottom-color: currentColor;
 }
 
 .terminal .underline-link {
   border-bottom: 1px solid var(--color-terminal-dim);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease;
 }
 .terminal .underline-link:hover {
   border-bottom-color: var(--color-terminal-accent);
   color: var(--color-terminal-accent);
+}
+
+/* ---------- Entrance ---------- */
+
+/* CSS-only so content is never dependent on JS to become visible.
+   `backwards` fill applies the start frame during the delay but releases the
+   element afterwards, leaving the hover transform free. */
+.terminal [data-reveal] {
+  animation: fade-up 520ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal::before,
+  .terminal .grad,
+  .terminal .caret,
+  .terminal .dot[data-s="public"],
+  .terminal [data-reveal] {
+    animation: none;
+  }
+  .terminal .card:hover,
+  .terminal .card:focus-within {
+    transform: none;
+  }
 }
 
 /* ---------- Editorial scope ---------- */
