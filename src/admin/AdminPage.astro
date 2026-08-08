@@ -23,6 +23,9 @@ import "katex/dist/katex.min.css";
         <span>Админка блога</span>
       </div>
       <div class="bar-right">
+        <span id="draftBadge" class="draft-badge" hidden>
+          черновик — на сайт не попадёт
+        </span>
         <span id="saveState" class="state" data-state="idle">Нет изменений</span>
         <button id="btnSave" class="btn" type="button">Сохранить <kbd>⌘S</kbd></button>
         <button id="btnPublish" class="btn btn-primary" type="button">Опубликовать</button>
@@ -199,6 +202,40 @@ import "katex/dist/katex.min.css";
         display: flex;
         align-items: center;
         gap: 0.5rem;
+      }
+
+      /* Статус черновика виден всегда: галочка в панели метаданных легко
+         теряется, а её цена — запись, которой нет на сайте. */
+      .admin .draft-badge {
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 176, 32, 0.45);
+        background: rgba(255, 176, 32, 0.14);
+        color: #ffb020;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        white-space: nowrap;
+      }
+
+      .admin .warn-box {
+        margin: 0 0 0.8rem;
+        padding: 0.7rem 0.85rem;
+        border-radius: 9px;
+        border: 1px solid rgba(255, 176, 32, 0.45);
+        background: rgba(255, 176, 32, 0.1);
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+      .admin .warn-box strong {
+        color: #ffb020;
+      }
+      .admin .warn-toggle {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-top: 0.6rem;
+        font-size: 0.83rem;
+        cursor: pointer;
       }
 
       .admin .state {
@@ -664,6 +701,7 @@ import "katex/dist/katex.min.css";
         saveState: $("saveState"),
         dlCategories: $("dlCategories"),
         dlTags: $("dlTags"),
+        draftBadge: $("draftBadge"),
         dropHint: $("dropHint"),
         filePicker: $<HTMLInputElement>("filePicker"),
         toast: $("toast"),
@@ -851,6 +889,7 @@ import "katex/dist/katex.min.css";
         els.draft.checked = Boolean(p.draft);
         els.body.value = p.body ?? "";
         syncCoverPreview();
+        syncDraftBadge();
         updateCounter();
       }
 
@@ -919,6 +958,7 @@ import "katex/dist/katex.min.css";
           state.dirty = false;
           els.editor.hidden = true;
           els.empty.hidden = false;
+          els.draftBadge.hidden = true;
           await loadList();
           toast("Запись удалена");
         } catch (err) {
@@ -1056,6 +1096,10 @@ import "katex/dist/katex.min.css";
         onBodyInput();
       }
 
+      function syncDraftBadge() {
+        els.draftBadge.hidden = !els.draft.checked;
+      }
+
       function syncCoverPreview() {
         const url = els.cover.value.trim();
         els.coverPreview.hidden = !url;
@@ -1091,9 +1135,39 @@ import "katex/dist/katex.min.css";
           return;
         }
 
+        // Черновик коммитится и уезжает, но сборка его пропускает — без этого
+        // предупреждения публикация выглядит успешной, а записи на сайте нет.
+        const isDraft = !els.editor.hidden && els.draft.checked;
+        let clearDraft: HTMLInputElement | null = null;
+
         openModal(
           "Публикация",
           (box) => {
+            if (isDraft) {
+              const warnBox = document.createElement("div");
+              warnBox.className = "warn-box";
+
+              const line = document.createElement("p");
+              line.style.margin = "0";
+              line.append("Запись ");
+              const strong = document.createElement("strong");
+              strong.textContent = `«${els.title.value.trim() || "без названия"}»`;
+              line.append(strong, " помечена черновиком. Она попадёт в репозиторий, но на сайте не появится.");
+              warnBox.append(line);
+
+              const label = document.createElement("label");
+              label.className = "warn-toggle";
+              clearDraft = document.createElement("input");
+              clearDraft.type = "checkbox";
+              clearDraft.checked = true;
+              const text = document.createElement("span");
+              text.textContent = "Снять пометку и опубликовать по-настоящему";
+              label.append(clearDraft, text);
+              warnBox.append(label);
+
+              box.append(warnBox);
+            }
+
             const p = document.createElement("p");
             p.style.margin = "0 0 0.6rem";
             p.style.fontSize = "0.85rem";
@@ -1121,10 +1195,17 @@ import "katex/dist/katex.min.css";
             warn.textContent = `Push в ветку ${status.branch} запустит сборку и выложит блог на oipav.ru.`;
             box.append(warn);
 
-            els.modalOk.disabled = !total && !status.ahead;
+            // Снятие черновика само по себе создаёт изменение, поэтому при
+            // такой галочке публиковать есть что даже без прочих правок.
+            els.modalOk.disabled = !total && !status.ahead && !isDraft;
           },
           async () => {
             try {
+              if (isDraft && clearDraft?.checked) {
+                els.draft.checked = false;
+                syncDraftBadge();
+                await save(); // запись перезаписывается уже без draft: true
+              }
               toast("Публикую…");
               const message = els.title.value.trim()
                 ? `Блог: ${els.title.value.trim()}`
@@ -1161,6 +1242,7 @@ import "katex/dist/katex.min.css";
         els.slugAuto.hidden = true;
       });
       els.cover.addEventListener("input", syncCoverPreview);
+      els.draft.addEventListener("change", syncDraftBadge);
       els.filter.addEventListener("input", renderList);
 
       $("btnNew").addEventListener("click", newPost);
